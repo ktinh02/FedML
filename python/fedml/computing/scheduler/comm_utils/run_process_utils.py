@@ -135,15 +135,13 @@ class RunProcessUtils:
             pass
 
     @staticmethod
-    def kill_process(process_id, exclude_current_pid=False):
+    def kill_process(process_id):
         try:
             process = psutil.Process(process_id)
             if process is None:
                 return
             child_processes = process.children(recursive=True)
             for sub_process in child_processes:
-                if exclude_current_pid and sub_process.pid == os.getpid():
-                    continue
                 if platform.system() == 'Windows':
                     os.system("taskkill /PID {} /T /F".format(sub_process.pid))
                 else:

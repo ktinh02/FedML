@@ -23,9 +23,7 @@ class FedMLBaseMasterAgent(ABC):
 
     def login(
             self, user_id, api_key=None, device_id=None,
-            os_name=None, role=None, runner_cmd=None,
-            communication_manager=None, sender_message_queue=None,
-            status_center_queue=None, sender_message_event=None
+            os_name=None, role=None, runner_cmd=None
     ):
         # Login account
         login_result = FedMLAccountManager.get_instance().login(
@@ -50,30 +48,19 @@ class FedMLBaseMasterAgent(ABC):
         # Initialize the protocol manager
         # noinspection PyBoardException
         try:
-            self._initialize_protocol_manager(
-                communication_manager=communication_manager,
-                sender_message_queue=sender_message_queue,
-                status_center_queue=status_center_queue,
-                sender_message_event=sender_message_event)
+            self._initialize_protocol_manager()
         except Exception as e:
             FedMLAccountManager.write_login_failed_file(is_client=False)
             self.protocol_mgr.stop()
             raise e
 
         # Start the protocol manager to process the messages from MLOps and slave agents.
-        if communication_manager is None:
-            self.protocol_mgr.start()
-
-        return login_result
+        self.protocol_mgr.start()
 
     @staticmethod
     def logout():
         GeneralConstants.cleanup_run_process(None, is_master=True)
         sys_utils.cleanup_all_fedml_server_api_processes()
-
-    def stop(self, kill_process=False):
-        if self.protocol_mgr is not None:
-            self.protocol_mgr.stop(kill_process=kill_process)
 
     def _create_protocol_manager(self, role, login_result):
         if self.protocol_mgr is not None:
@@ -82,11 +69,7 @@ class FedMLBaseMasterAgent(ABC):
             login_result, agent_config=login_result.agent_config)
         self.protocol_mgr.run_as_edge_server_and_agent = True \
             if role == FedMLAccountManager.ROLE_EDGE_SERVER else False
-        self.protocol_mgr.run_as_cloud_agent = True \
-            if role == FedMLAccountManager.ROLE_CLOUD_AGENT or role == FedMLAccountManager.ROLE_GPU_MASTER_SERVER \
-            else False
-        self.use_local_process_as_cloud_server = True \
-            if role == FedMLAccountManager.ROLE_GPU_MASTER_SERVER else self.use_local_process_as_cloud_server
+        self.protocol_mgr.run_as_cloud_agent = True if role == FedMLAccountManager.ROLE_CLOUD_AGENT else False
         self.protocol_mgr.run_as_cloud_server = True if role == FedMLAccountManager.ROLE_CLOUD_SERVER else False
         self.protocol_mgr.args = login_result
         self.protocol_mgr.edge_id = login_result.edge_id
@@ -96,20 +79,12 @@ class FedMLBaseMasterAgent(ABC):
         self.protocol_mgr.enable_simulation_cloud_agent = self.enable_simulation_cloud_agent
         self.protocol_mgr.use_local_process_as_cloud_server = self.use_local_process_as_cloud_server
 
-    def _initialize_protocol_manager(
-            self, communication_manager=None, sender_message_queue=None,
-            status_center_queue=None, sender_message_event=None
-    ):
+    def _initialize_protocol_manager(self):
         # Init local database
         self._init_database()
 
         # Initialize the master protocol
-        self.protocol_mgr.set_parent_agent(self)
-        self.protocol_mgr.initialize(
-            communication_manager=communication_manager,
-            sender_message_queue=sender_message_queue,
-            status_center_queue=status_center_queue,
-            sender_message_event=sender_message_event)
+        self.protocol_mgr.initialize()
 
         # Report the IDLE status to MLOps
         self.mlops_metrics.report_server_training_status(
@@ -134,9 +109,6 @@ class FedMLBaseMasterAgent(ABC):
         in_args.server_agent_id = edge_id
         MLOpsRuntimeLog.get_instance(in_args).init_logs()
 
-    def get_protocol_manager(self):
-        return self.protocol_mgr
-
     @abstractmethod
     def _get_log_file_dir(self):
         pass
@@ -152,17 +124,3 @@ class FedMLBaseMasterAgent(ABC):
     @abstractmethod
     def _generate_protocol_manager_instance(self, args, agent_config=None):
         return None
-
-    def start_master_server_instance(self, payload):
-        self.protocol_mgr.start_master_server_instance(payload)
-
-    def generate_agent_instance(self):
-        return FedMLBaseMasterAgent()
-
-    def process_job_complete_status(self, run_id, topic, payload):
-        if self.protocol_mgr is None:
-            return
-        if topic in self.protocol_mgr.get_subscribed_topics():
-            message_handler = self.protocol_mgr.get_listener_handler(topic)
-            if message_handler is not None:
-                message_handler(topic, payload)
