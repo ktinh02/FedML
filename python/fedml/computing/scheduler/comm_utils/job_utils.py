@@ -86,6 +86,8 @@ class JobRunnerUtils(Singleton):
                     # Get the available GPU list, FEDML_GLOBAL_DEVICE_AVAILABLE_GPU_IDS_TAG-${device_id}
                     available_gpu_ids = ComputeCacheManager.get_instance().get_gpu_cache().get_device_available_gpu_ids(
                         device_id)
+                    logging.info(
+                        f"Available GPU Ids fetched from cache: {available_gpu_ids}")
 
                     logging.info(f"Check worker({device_id})'s realtime gpu availability in DB"
                                  f" for run {run_id}: {available_gpu_ids}")
@@ -94,8 +96,11 @@ class JobRunnerUtils(Singleton):
                     if available_gpu_ids is None:
                         # Get realtime GPU availability list from the system
                         available_gpu_ids = JobRunnerUtils.get_realtime_gpu_available_ids().copy()
+                        logging.info(f"Cache not set yet, fetching realtime available GPU Ids: {available_gpu_ids}")
                     else:
                         available_gpu_ids = JobRunnerUtils.trim_unavailable_gpu_ids(available_gpu_ids)
+                        logging.info(
+                            f"Trimmed available GPU Ids: {available_gpu_ids}")
 
                     # Get the matched gpu ids string by the request gpu num
                     cuda_visible_gpu_ids_str, matched_gpu_num = JobRunnerUtils.request_gpu_ids(request_gpu_num,
@@ -119,6 +124,8 @@ class JobRunnerUtils(Singleton):
 
                     ComputeCacheManager.get_instance().get_gpu_cache().set_device_available_gpu_ids(
                         device_id, available_gpu_ids)
+                    
+                    logging.info(f"Updated cache with following available gpu ids: {available_gpu_ids}")
 
                     # For a single run, could be scale up. So if existed such a key, should extend, not replace
                     existed_gpu_nums = ComputeCacheManager.get_instance().get_gpu_cache().get_device_run_num_gpus(

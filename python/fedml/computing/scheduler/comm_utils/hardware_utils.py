@@ -11,6 +11,29 @@ from fedml.computing.scheduler.comm_utils.singleton import Singleton
 GPU_CARD_UTILS = [NvidiaGPUtil, QualcommNPUtil]
 
 
+# This function is just for debugging, can be removed at later point
+def get_gpu_list_and_realtime_gpu_available_ids() -> (List[dict], List[int]):
+    gpu_list = HardwareUtil.get_gpus()
+    gpu_count = len(gpu_list)
+    realtime_available_gpu_ids = HardwareUtil.get_available_gpu_ids(order='memory', limit=gpu_count, max_load=0.01,
+                                                            max_memory=0.01)
+    return gpu_list, realtime_available_gpu_ids
+
+# This function is just for debugging, can be removed at later point
+def trim_unavailable_gpu_ids(gpu_ids) -> List[int]:
+    # Trim the gpu ids based on the realtime available gpu id list.
+    available_gpu_ids = [int(gpu_id) for gpu_id in gpu_ids]
+    gpu_list, realtime_available_gpu_ids = get_gpu_list_and_realtime_gpu_available_ids()
+    unavailable_gpu_ids = list()
+
+    for gpu_id in available_gpu_ids:
+        if gpu_id not in realtime_available_gpu_ids:
+            unavailable_gpu_ids.append(gpu_id)
+
+    trimmed_gpu_ids = list(set(available_gpu_ids) - set(unavailable_gpu_ids))
+    return trimmed_gpu_ids.copy()
+
+
 class HardwareUtil(metaclass=Singleton):
     __gpu_util: Optional[GPUCardUtil] = None
 
@@ -60,6 +83,8 @@ class HardwareUtil(metaclass=Singleton):
 if __name__ == "__main__":
     gpus = HardwareUtil.get_gpus()
     get_available_gpu_cards = HardwareUtil.get_available_gpu_ids(limit=len(gpus))
+    trimmed_gpu_ids = trim_unavailable_gpu_ids(get_available_gpu_cards)
+    print(trimmed_gpu_ids)
     device_mapping = HardwareUtil.get_docker_gpu_device_mapping(get_available_gpu_cards, len(get_available_gpu_cards))
     print(gpus)
     print(get_available_gpu_cards)
