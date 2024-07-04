@@ -105,7 +105,7 @@ class JobMonitor(Singleton):
         for endpoint_settings in endpoints_settings_list:
             endpoint_state = endpoint_settings["state"]
             if endpoint_state == "DEPLOYED" and endpoint_settings["enable_auto_scaling"]:
-                try:    # Should not let one endpoint affect the others
+                try:  # Should not let one endpoint affect the others
                     logging.info(f"After interval, check the autoscaler for async future list."
                                  f"{self.endpoints_autoscale_predict_future}")
                     # TODO(fedml-dimitris): The policy can be set dynamically or be user specific.
@@ -123,7 +123,7 @@ class JobMonitor(Singleton):
                     autoscaling_policy = ConcurrentQueryPolicy(**autoscaling_policy_config)
 
                     e_id, e_name, model_name = endpoint_settings["endpoint_id"], endpoint_settings["endpoint_name"], \
-                                                  endpoint_settings["model_name"]
+                        endpoint_settings["model_name"]
 
                     logging.info(f"Querying the autoscaler for endpoint {e_id} with user settings {endpoint_settings}.")
 
@@ -329,7 +329,7 @@ class JobMonitor(Singleton):
 
                     if mqtt_mgr is not None:
                         mqtt_mgr.send_message_json(topic_name, message_json)
-                    break   # TODO(Raphael, Asce): Change to replica-level reporting.
+                    break  # TODO(Raphael, Asce): Change to replica-level reporting.
 
         except Exception as e:
             logging.error(f"Exception when monitoring replicas performance on the worker agent. error: {e}")
@@ -621,7 +621,7 @@ class JobMonitor(Singleton):
                                 logging.info(
                                     f"======================================"
                                     f"Check endpoint status failed for endpoint {job.job_id} "
-                                    f"on device:{job.edge_id} with replica_no:{rank+1}."
+                                    f"on device:{job.edge_id} with replica_no:{rank + 1}."
                                     f"======================================")
                                 # Restart the container if the endpoint is not ready
                                 # send unavailable status to the master agent
@@ -629,7 +629,7 @@ class JobMonitor(Singleton):
                                 endpoint_sync_protocol.send_sync_inference_info(
                                     device_ids[0], job.edge_id, job.job_id, endpoint_name, model_name,
                                     model_id, model_version, inference_port=None,
-                                    disable=True, replica_no=rank+1)
+                                    disable=True, replica_no=rank + 1)
 
                                 # [Critical]
                                 # 1. After restart, the "running" status of container does NOT mean the endpoint is
@@ -649,7 +649,7 @@ class JobMonitor(Singleton):
                                                                          MSG_MODELOPS_DEPLOYMENT_STATUS_UPDATING)
                                     endpoint_sync_protocol.set_local_deployment_status_result(
                                         job.job_id, endpoint_name, model_name, model_version, job.edge_id,
-                                        inference_port, None, deployment_result, replica_no=rank+1)
+                                        inference_port, None, deployment_result, replica_no=rank + 1)
 
                             # Report the status to the master agent
                             if is_endpoint_ready:
@@ -662,12 +662,12 @@ class JobMonitor(Singleton):
                                 # TODO: Consistency control
                                 endpoint_sync_protocol.send_sync_inference_info(
                                     device_ids[0], job.edge_id, job.job_id, endpoint_name, model_name,
-                                    model_id, model_version, inference_port, replica_no=rank+1)
+                                    model_id, model_version, inference_port, replica_no=rank + 1)
 
                                 # Change the local port for next ready check
                                 endpoint_sync_protocol.set_local_deployment_status_result(
                                     job.job_id, endpoint_name, model_name, model_version, job.edge_id,
-                                    inference_port, None, deployment_result, replica_no=rank+1)
+                                    inference_port, None, deployment_result, replica_no=rank + 1)
 
                     elif job.status == device_client_constants.ClientConstants.MSG_MLOPS_CLIENT_STATUS_OFFLINE:
                         # TODO: Bring the offline status online
@@ -1143,7 +1143,7 @@ class JobMonitor(Singleton):
                                 t_datetime_obj = isoparse(container_time)
 
                                 # ISSUE: this will cause the timestamp is not correct.
-                                #if t_sec_offset is not None:
+                                # if t_sec_offset is not None:
                                 #    t_datetime_obj = t_datetime_obj + datetime.timedelta(seconds=t_sec_offset)
                             except Exception as e:
                                 logging.error(f"Exception when parsing the container log time {e}")
@@ -1154,7 +1154,7 @@ class JobMonitor(Singleton):
                             t_nano_sec = f"[{t_sec}.{nano_second_str}]"
 
                             device_replica_prefix = f"[FedML-Replica @device-id-{job.edge_id} @replica-rank-{i}]"
-                            log_level_prefix = "[INFO]"    # Use default level to represent the docker log level
+                            log_level_prefix = "[INFO]"  # Use default level to represent the docker log level
                             program_location_prefix = "[Container Logs]"  # Use default location
 
                             prefix = (f"{device_replica_prefix} {t_nano_sec} "
@@ -1183,7 +1183,18 @@ class JobMonitor(Singleton):
                         log_file_prefix=JobMonitor.ENDPOINT_CONTAINER_LOG_PREFIX
                     )
 
+            # Stop the log processor whose job is not running.
+            running_log_processor_list = MLOpsRuntimeLogDaemon.get_instance(fedml_args). \
+                get_running_log_processor_list()
+            for (log_processor, log_run_id, log_device_id) in running_log_processor_list:
+                found_running_job_item = False
+                for job_item in job_list.job_list:
+                    if str(log_run_id) == str(job_item.job_id) and str(log_device_id) == str(job_item.edge_id):
+                        found_running_job_item = True
+                        break
+                if not found_running_job_item:
+                    MLOpsRuntimeLogDaemon.get_instance(fedml_args).stop_log_processor(
+                        log_run_id, int(log_device_id))
+
         except Exception as e:
             print(f"Exception when syncing endpoint log to MLOps {traceback.format_exc()}.")
-
-

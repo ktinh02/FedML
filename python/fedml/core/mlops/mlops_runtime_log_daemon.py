@@ -455,6 +455,9 @@ class MLOpsRuntimeLogDaemon:
             except ValueError as ex:
                 self.log_child_process_list.append((log_child_process, log_run_id, log_device_id))
 
+    def get_running_log_processor_list(self):
+        return self.log_child_process_list
+
     def stop_log_processor(self, log_run_id, log_device_id):
         if log_run_id is None or log_device_id is None:
             return

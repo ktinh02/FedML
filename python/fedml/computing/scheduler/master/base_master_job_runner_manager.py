@@ -8,6 +8,8 @@ from abc import ABC
 from multiprocessing import Process
 
 import fedml
+from fedml.core.mlops import MLOpsRuntimeLogDaemon
+
 from .cloud_server_manager import FedMLCloudServerManager
 from ..comm_utils.run_process_utils import RunProcessUtils
 from ..scheduler_core.scheduler_base_job_runner_manager import FedMLSchedulerBaseJobRunnerManager
@@ -90,6 +92,8 @@ class FedMLBaseMasterJobRunnerManager(FedMLSchedulerBaseJobRunnerManager, ABC):
             if self.master_agent_instance_map.get(run_id_str, None) is not None:
                 self.master_agent_instance_map.get(run_id_str).stop(kill_process=True)
                 self.master_agent_instance_map.pop(run_id_str)
+
+        MLOpsRuntimeLogDaemon.get_instance(args).stop_log_processor(run_id, server_id)
 
     def _start_cloud_server(
             self, args, run_id, request_json, edge_id=None,

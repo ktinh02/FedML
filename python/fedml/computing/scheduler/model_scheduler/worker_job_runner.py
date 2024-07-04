@@ -9,7 +9,7 @@ import urllib
 from abc import ABC
 import yaml
 from fedml.computing.scheduler.comm_utils.job_utils import JobRunnerUtils
-from fedml.core.mlops import MLOpsRuntimeLog
+from fedml.core.mlops import MLOpsRuntimeLog, MLOpsRuntimeLogDaemon
 from fedml.computing.scheduler.comm_utils import file_utils
 from .device_client_constants import ClientConstants
 from .device_model_cache import FedMLModelCache
@@ -142,7 +142,13 @@ class FedMLDeployWorkerJobRunner(FedMLBaseSlaveJobRunner, ABC):
         inference_end_point_id = run_id
         self.run_id = run_id
 
-        MLOpsRuntimeLog.get_instance(self.args).init_logs(log_level=logging.INFO)
+        # Start log processor for current run
+        self.args.run_id = run_id
+        self.args.edge_id = self.edge_id
+        MLOpsRuntimeLog(args=self.args).init_logs()
+        MLOpsRuntimeLogDaemon.get_instance(self.args).set_log_source(
+            ClientConstants.FEDML_LOG_SOURCE_TYPE_MODEL_END_POINT)
+        MLOpsRuntimeLogDaemon.get_instance(self.args).start_log_processor(run_id, self.edge_id)
 
         logging.info(f"[Worker] Received model deployment request from master for endpoint {run_id}.")
         self.replica_handler = FedMLDeviceReplicaHandler(self.edge_id, self.request_json)

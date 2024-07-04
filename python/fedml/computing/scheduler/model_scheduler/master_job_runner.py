@@ -9,7 +9,7 @@ import traceback
 from abc import ABC
 
 import fedml
-from fedml.core.mlops import MLOpsRuntimeLog, MLOpsConfigs
+from fedml.core.mlops import MLOpsRuntimeLog, MLOpsConfigs, MLOpsRuntimeLogDaemon
 from fedml.core.mlops.mlops_runtime_log import MLOpsFormatter
 from .device_client_constants import ClientConstants
 from .device_model_cache import FedMLModelCache
@@ -123,11 +123,6 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
         FedMLDeployMasterJobRunner.start_device_inference_monitor(
             run_id, end_point_name, model_id, model_name, model_version)
 
-        # Changed the status to "IDLE"
-        self.status_reporter.report_server_id_status(
-            run_id, ServerConstants.MSG_MLOPS_SERVER_STATUS_FINISHED,
-            is_from_model=True, server_agent_id=self.edge_id, server_id=self.edge_id, edge_id=self.edge_id)
-
         # Check if we should stop the runner
         logging.info("send the model inference request to slave devices...")
         self.check_runner_stop_event()
@@ -163,6 +158,11 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
                 FedMLModelCache.get_instance().set_redis_params(self.redis_addr, self.redis_port, self.redis_password)
                 FedMLModelCache.get_instance(self.redis_addr, self.redis_port). \
                     update_user_setting_replica_num(end_point_id=run_id, state="DEPLOYED")
+
+                # Changed the status to "FINISHED"
+                self.status_reporter.report_server_id_status(
+                    run_id, ServerConstants.MSG_MLOPS_SERVER_STATUS_FINISHED,
+                    is_from_model=True, server_agent_id=self.edge_id, server_id=self.edge_id, edge_id=self.edge_id)
 
                 # Complete the job runner
                 self.trigger_completed_event()
@@ -369,6 +369,7 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
                 end_point_id, end_point_name, payload_json["model_name"], "",
                 ServerConstants.MSG_MODELOPS_DEPLOYMENT_STATUS_FAILED,
                 message_center=self.message_center)
+
             return
 
         # Wait for all replica-level's result, not device-level
@@ -449,6 +450,11 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
                         ServerConstants.MSG_MODELOPS_DEPLOYMENT_STATUS_ABORTED, message_center=self.message_center)
 
                 self.replica_controller.under_rollback = False
+
+                # Changed the status to "FAILED"
+                self.status_reporter.report_server_id_status(
+                    end_point_id, ServerConstants.MSG_MLOPS_SERVER_STATUS_FAILED,
+                    is_from_model=True, server_agent_id=self.edge_id, server_id=self.edge_id, edge_id=self.edge_id)
             else:
                 # Set the end point activation status to True, for scaling out / in and rolling update
                 FedMLModelCache.get_instance(self.redis_addr, self.redis_port). \
@@ -458,9 +464,13 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
                     end_point_id, end_point_name, payload_json["model_name"], model_inference_url,
                     ServerConstants.MSG_MODELOPS_DEPLOYMENT_STATUS_DEPLOYED, message_center=self.message_center)
 
+                # Changed the status to "FINISHED"
+                self.status_reporter.report_server_id_status(
+                    end_point_id, ServerConstants.MSG_MLOPS_SERVER_STATUS_FINISHED,
+                    is_from_model=True, server_agent_id=self.edge_id, server_id=self.edge_id, edge_id=self.edge_id)
+
             time.sleep(3)
             self.trigger_completed_event()
-
 
     def cleanup_runner_process(self, run_id):
         ServerConstants.cleanup_run_process(run_id, not_kill_subprocess=True)
