@@ -233,9 +233,10 @@ class GeneralConstants:
 
     @staticmethod
     def get_process_name(process_tag, run_id=None, edge_id=None):
-        return f'{GeneralConstants.FEDML_PROCESS_NAME_PREFIX}{process_tag}'\
-               f'{"-run-" + str(run_id) if run_id is not None and int(run_id) != 0 else ""}'\
-               f'{"-edge-" + str(edge_id) if edge_id is not None else ""}'
+        return None
+        # return f'{GeneralConstants.FEDML_PROCESS_NAME_PREFIX}{process_tag}'\
+        #        f'{"-run-" + str(run_id) if run_id is not None and int(run_id) != 0 else ""}'\
+        #        f'{"-edge-" + str(edge_id) if edge_id is not None else ""}'
 
     @staticmethod
     def get_process_name_with_prefix(process_prefix, run_id=None, edge_id=None):
