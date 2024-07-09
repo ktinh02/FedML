@@ -146,15 +146,6 @@ class FedMLDeployWorkerProtocolManager(FedMLBaseSlaveProtocolManager):
         except Exception as e:
             pass
 
-        # Start log processor for current run
-        run_id = inference_end_point_id
-        self.args.run_id = run_id
-        self.args.edge_id = self.edge_id
-        MLOpsRuntimeLog(args=self.args).init_logs()
-        MLOpsRuntimeLogDaemon.get_instance(self.args).set_log_source(
-            ClientConstants.FEDML_LOG_SOURCE_TYPE_MODEL_END_POINT)
-        MLOpsRuntimeLogDaemon.get_instance(self.args).start_log_processor(run_id, self.edge_id)
-
         # Start the job runner
         request_json["run_id"] = run_id
         run_id_str = str(run_id)
@@ -223,3 +214,5 @@ class FedMLDeployWorkerProtocolManager(FedMLBaseSlaveProtocolManager):
         FedMLModelCache.get_instance().delete_all_replica_gpu_ids(model_msg_object.run_id,
                                                                   model_msg_object.end_point_name,
                                                                   model_msg_object.model_name, self.edge_id)
+
+        MLOpsRuntimeLogDaemon.get_instance(self.args).stop_log_processor(model_msg_object.run_id, self.edge_id)

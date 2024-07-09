@@ -15,6 +15,7 @@ import setproctitle
 import fedml
 from fedml.core.distributed.communication.mqtt.mqtt_manager import MqttManager
 from .general_constants import GeneralConstants
+from .shared_resource_manager import FedMLSharedResourceManager
 from ..slave.client_constants import ClientConstants
 from ....core.mlops.mlops_metrics import MLOpsMetrics
 from operator import methodcaller
@@ -140,8 +141,8 @@ class FedMLMessageCenter(object):
         return self.message_event
 
     def start_sender(self, message_center_name=None):
-        self.sender_message_queue = multiprocessing.Manager().Queue()
-        self.message_event = multiprocessing.Event()
+        self.sender_message_queue = FedMLSharedResourceManager.get_instance().get_queue()
+        self.message_event = FedMLSharedResourceManager.get_instance().get_event()
         self.message_event.clear()
         process_name = GeneralConstants.get_message_center_sender_process_name(message_center_name)
         message_center = FedMLMessageCenter(agent_config=self.sender_agent_config,
@@ -335,7 +336,7 @@ class FedMLMessageCenter(object):
         return self.listener_message_queue
 
     def setup_listener_message_queue(self):
-        self.listener_message_queue = multiprocessing.Manager().Queue()
+        self.listener_message_queue = FedMLSharedResourceManager.get_instance().get_queue()
 
     def start_listener(
             self, sender_message_queue=None, listener_message_queue=None,
@@ -346,10 +347,11 @@ class FedMLMessageCenter(object):
 
         if listener_message_queue is None:
             if self.listener_message_queue is None:
-                self.listener_message_queue = multiprocessing.Manager().Queue()
+                self.listener_message_queue = \
+                    FedMLSharedResourceManager.get_instance().get_queue()
         else:
             self.listener_message_queue = listener_message_queue
-        self.listener_message_event = multiprocessing.Event()
+        self.listener_message_event = FedMLSharedResourceManager.get_instance().get_event()
         self.listener_message_event.clear()
         self.listener_agent_config = agent_config
         message_runner = self

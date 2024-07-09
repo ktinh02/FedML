@@ -14,6 +14,8 @@ from .general_constants import GeneralConstants
 from .message_common import FedMLMessageEntity, FedMLStatusEntity
 from .message_center import FedMLMessageCenter
 import traceback
+
+from .shared_resource_manager import FedMLSharedResourceManager
 from .status_manager_protocols import FedMLStatusManager
 
 
@@ -115,8 +117,8 @@ class FedMLStatusCenter(object):
                             listener_message_center_queue=None,
                             sender_message_event=None,
                             is_slave_agent=False):
-        self.status_queue = multiprocessing.Manager().Queue()
-        self.status_event = multiprocessing.Event()
+        self.status_queue = FedMLSharedResourceManager.get_instance().get_queue()
+        self.status_event = FedMLSharedResourceManager.get_instance().get_event()
         self.status_event.clear()
         self.status_sender_message_center_queue = sender_message_center_queue
         self.status_listener_message_center_queue = listener_message_center_queue

@@ -1,8 +1,7 @@
 import logging
 import platform
 
-import multiprocess
-import multiprocess as multiprocessing
+import multiprocessing
 import os
 import random
 
@@ -38,7 +37,7 @@ from .core.common.ml_engine_backend import MLEngineBackend
 _global_training_type = None
 _global_comm_backend = None
 
-__version__ = "0.8.51b1"
+__version__ = "0.8.51b9"
 
 
 # This is the deployment environment used for different roles (RD/PM/BD/Public Developers). Potential VALUE: local, dev, test, release
@@ -453,11 +452,11 @@ def _init_multiprocessing():
     """
     if platform.system() == "Windows":
         if multiprocessing.get_start_method() != "spawn":
-            # force all platforms (Windows/Linux/macOS) to use the same way (spawn) for multiprocessing
+            # force all platforms (Windows) to use the same way (spawn) for multiprocessing
             multiprocessing.set_start_method("spawn", force=True)
     else:
         if multiprocessing.get_start_method() != "fork":
-            # force all platforms (Windows/Linux/macOS) to use the same way (fork) for multiprocessing
+            # force all platforms (Linux/macOS) to use the same way (fork) for multiprocessing
             multiprocessing.set_start_method("fork", force=True)
 
 
@@ -472,12 +471,7 @@ def get_process(target=None, args=None):
     if platform.system() == "Windows":
         return multiprocessing.Process(target=target, args=args)
     else:
-        #return multiprocessing.Process(target=target, args=args)
-        #multiprocessing.set_start_method("spawn", force=True)
-        #return multiprocess.context.SpawnContext.Process(target=target, args=args)
-        #multiprocessing.Manager().current_process().authkey = str.encode("abc")
         new_process = multiprocessing.get_context("fork").Process(target=target, args=args)
-        #new_process.authkey = str.encode("abc")
         return new_process
 
 

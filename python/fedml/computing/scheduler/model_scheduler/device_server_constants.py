@@ -1,18 +1,15 @@
 import logging
 import os
 import platform
-import signal
 import subprocess
 import sys
 from os.path import expanduser
 from pathlib import Path
 
-import psutil
 import yaml
 
 from ..comm_utils.constants import SchedulerConstants
 from ..comm_utils.run_process_utils import RunProcessUtils
-from ..comm_utils.yaml_utils import load_yaml_config
 
 import fedml
 
