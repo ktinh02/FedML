@@ -1,7 +1,6 @@
 import copy
 import json
 import logging
-import multiprocessing
 import os
 import time
 import queue
@@ -22,6 +21,7 @@ from ..scheduler_core.general_constants import GeneralConstants
 from ..master.base_master_job_runner import FedMLBaseMasterJobRunner
 from .device_replica_controller import FedMLDeviceReplicaController
 from .job_runner_msg_sender import FedMLDeployJobRunnerMsgSender
+from ..scheduler_core.shared_resource_manager import FedMLSharedResourceManager
 
 
 class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerMsgSender, ABC):
@@ -50,7 +50,8 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
         self.replica_controller = None
         self.deployed_replica_payload = None
         self.slave_deployment_results_map = dict()
-        self.deployment_result_queue = multiprocessing.Manager().Queue()
+        self.deployment_result_queue = \
+            FedMLSharedResourceManager.get_instance().get_queue()
         self.is_fresh_endpoint = True
 
     # Override
@@ -180,13 +181,30 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
 
             try:
                 deployment_result = self.deployment_result_queue.get(block=False, timeout=0.2)
+                if deployment_result is None:
+                    continue
                 result_topic = deployment_result.get("topic", None)
                 result_payload = deployment_result.get("payload", None)
                 self.process_deployment_result_message(topic=result_topic, payload=result_payload)
             except queue.Empty as e:  # If queue is empty, then continue
                 pass
+            except Exception as e:
+                pass
 
             time.sleep(0.5)
+
+    def _process_remaining_messages(self):
+        while True:
+            try:
+                deployment_result = self.deployment_result_queue.get(block=False, timeout=0.2)
+                result_topic = deployment_result.get("topic", None)
+                result_payload = deployment_result.get("payload", None)
+                self.process_deployment_result_message(topic=result_topic, payload=result_payload)
+            except queue.Empty as e:  # If queue is empty, then continue
+                break
+            except Exception as e:
+                break
+            time.sleep(0.1)
 
     def save_deployment_result(self, topic=None, payload=None):
         self.deployment_result_queue.put({"topic": topic, "payload": payload})

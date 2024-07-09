@@ -10,12 +10,12 @@ from abc import ABC, abstractmethod
 import setproctitle
 
 import fedml
+from ..scheduler_core.shared_resource_manager import FedMLSharedResourceManager
 from ....core.mlops.mlops_runtime_log import MLOpsRuntimeLog
 from ....core.mlops.mlops_runtime_log_daemon import MLOpsRuntimeLogDaemon
 from .client_data_interface import FedMLClientDataInterface
 from ..comm_utils import sys_utils
 from ....core.mlops.mlops_utils import MLOpsUtils
-from multiprocessing import Process
 from ..scheduler_core.scheduler_base_job_runner import FedMLSchedulerBaseJobRunner, RunnerError, RunnerCompletedError
 from ..scheduler_core.general_constants import GeneralConstants
 from ..comm_utils.job_utils import JobRunnerUtils
@@ -259,9 +259,10 @@ class FedMLBaseSlaveJobRunner(FedMLSchedulerBaseJobRunner, ABC):
         )
         client_runner.start_request_json = request_json
         run_id_str = str(run_id)
-        self.run_process_event = multiprocessing.Event()
+        self.run_process_event = FedMLSharedResourceManager.get_instance().get_event()
         client_runner.run_process_event = self.run_process_event
-        self.run_process_completed_event = multiprocessing.Event()
+        self.run_process_completed_event = \
+            FedMLSharedResourceManager.get_instance().get_event()
         client_runner.run_process_completed_event = self.run_process_completed_event
         client_runner.server_id = request_json.get("server_id", "0")
         self.run_extend_queue_list = self._generate_extend_queue_list()

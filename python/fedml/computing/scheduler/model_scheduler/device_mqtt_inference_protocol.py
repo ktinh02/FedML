@@ -1,5 +1,4 @@
 import json
-import multiprocessing
 
 from multiprocessing import Process
 import os
@@ -10,6 +9,7 @@ import uuid
 
 import asyncio
 
+from ..scheduler_core.shared_resource_manager import FedMLSharedResourceManager
 from ....core.distributed.communication.mqtt.mqtt_manager import MqttManager
 from .device_http_inference_protocol import FedMLHttpInference
 
@@ -95,7 +95,8 @@ class FedMLMqttInference:
         inference_req_id = str(uuid.uuid4())
         if self.run_inference_event_map.get(str_endpoint_id) is None:
             self.run_inference_event_map[str_endpoint_id] = dict()
-        self.run_inference_event_map[str_endpoint_id][inference_req_id] = multiprocessing.Event()
+        self.run_inference_event_map[str_endpoint_id][inference_req_id] = \
+            FedMLSharedResourceManager.get_instance().get_event()
         self.run_inference_event_map[str_endpoint_id][inference_req_id].clear()
 
         self.send_mqtt_endpoint_inference_request(
@@ -169,7 +170,8 @@ class FedMLMqttInference:
         if self.run_inference_event_map.get(str_endpoint_id) is None:
             self.run_inference_event_map[str_endpoint_id] = dict()
         if self.run_inference_event_map[str_endpoint_id].get(inference_request_id) is None:
-            self.run_inference_event_map[str_endpoint_id][inference_request_id] = multiprocessing.Event()
+            self.run_inference_event_map[str_endpoint_id][inference_request_id] = \
+                FedMLSharedResourceManager.get_instance().get_event()
         self.run_inference_event_map[str_endpoint_id][inference_request_id].set()
 
     def on_client_mqtt_disconnected(self, mqtt_client_object):

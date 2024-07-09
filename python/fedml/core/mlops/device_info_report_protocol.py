@@ -5,6 +5,7 @@ import threading
 import time
 import uuid
 
+from fedml.computing.scheduler.scheduler_core.shared_resource_manager import FedMLSharedResourceManager
 from fedml.core.distributed.communication.mqtt.mqtt_manager import MqttManager
 
 
@@ -27,7 +28,8 @@ class FedMLDeviceInfoReportProtocol:
         self.setup_listener_for_device_info_response(server_id)
 
         if self.run_device_info_event_map.get(str_edge_id) is None:
-            self.run_device_info_event_map[str_edge_id] = multiprocessing.Event()
+            self.run_device_info_event_map[str_edge_id] = \
+                FedMLSharedResourceManager.get_instance().get_event()
         self.run_device_info_event_map[str_edge_id].clear()
 
         self.request_device_info(run_id, edge_id, server_id)

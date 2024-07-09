@@ -11,6 +11,7 @@ import zipfile
 import queue
 
 import fedml
+from .shared_resource_manager import FedMLSharedResourceManager
 from ..comm_utils.constants import SchedulerConstants
 from ..comm_utils.job_utils import JobRunnerUtils, DockerArgs
 from ..scheduler_entry.constants import Constants
@@ -209,9 +210,8 @@ class FedMLSchedulerBaseJobRunner(ABC):
         ssl._create_default_https_context = ssl._create_unverified_context
 
         # Open a process to download the package so that we can avoid the request is blocked and check the timeout.
-        from multiprocessing import Process
-        completed_event = multiprocessing.Event()
-        info_queue = multiprocessing.Manager().Queue()
+        completed_event = FedMLSharedResourceManager.get_instance().get_event()
+        info_queue = FedMLSharedResourceManager.get_instance().get_queue()
         if platform.system() == "Windows":
             download_process = multiprocessing.Process(
                 target=self.download_package_proc,

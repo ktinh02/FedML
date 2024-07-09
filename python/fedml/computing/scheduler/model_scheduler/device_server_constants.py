@@ -1,18 +1,15 @@
 import logging
 import os
 import platform
-import signal
 import subprocess
 import sys
 from os.path import expanduser
 from pathlib import Path
 
-import psutil
 import yaml
 
 from ..comm_utils.constants import SchedulerConstants
 from ..comm_utils.run_process_utils import RunProcessUtils
-from ..comm_utils.yaml_utils import load_yaml_config
 
 import fedml
 
@@ -146,6 +143,7 @@ class ServerConstants(object):
     DEVICE_DIFF_ADD_OPERATION = "op: add"
     DEVICE_DIFF_DELETE_OPERATION = "op: delete"
     DEVICE_DIFF_REPLACE_OPERATION = "op: replace"
+
     @staticmethod
     def get_fedml_home_dir():
         home_dir = expanduser("~")

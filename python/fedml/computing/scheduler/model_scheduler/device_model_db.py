@@ -79,7 +79,7 @@ class FedMLModelDatabase(Singleton):
                     replica_result_list.append(result_payload)
         except Exception as e:
             # Do not intervene other endpoints on this device
-            logging.error(f"Error in get_deployment_result_with_device_id: {e}")
+            # logging.error(f"Error in get_deployment_result_with_device_id: {e}")
             return None
 
         return replica_result_list

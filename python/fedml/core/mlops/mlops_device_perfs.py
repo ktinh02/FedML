@@ -18,6 +18,7 @@ from .mlops_utils import MLOpsUtils
 from .system_stats import SysStats
 from ...computing.scheduler.comm_utils.job_monitor import JobMonitor
 from ...computing.scheduler.scheduler_core.general_constants import GeneralConstants
+from ...computing.scheduler.scheduler_core.shared_resource_manager import FedMLSharedResourceManager
 from ...core.distributed.communication.mqtt.mqtt_manager import MqttManager
 
 
@@ -87,7 +88,8 @@ class MLOpsDevicePerfStats(object):
         perf_stats.run_id = getattr(sys_args, "run_id", 0)
         perf_stats.is_client = self.is_client
         if self.device_realtime_stats_event is None:
-            self.device_realtime_stats_event = multiprocessing.Event()
+            self.device_realtime_stats_event = \
+                FedMLSharedResourceManager.get_instance().get_event()
         self.device_realtime_stats_event.clear()
         perf_stats.device_realtime_stats_event = self.device_realtime_stats_event
 

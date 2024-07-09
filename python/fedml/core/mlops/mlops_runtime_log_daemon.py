@@ -14,6 +14,7 @@ import yaml
 import fedml
 from fedml.computing.scheduler.comm_utils.run_process_utils import RunProcessUtils
 from fedml.computing.scheduler.scheduler_core.general_constants import GeneralConstants
+from fedml.computing.scheduler.scheduler_core.shared_resource_manager import FedMLSharedResourceManager
 from fedml.core.mlops.mlops_utils import MLOpsLoggingUtils
 from ...core.mlops.mlops_configs import MLOpsConfigs
 
@@ -436,7 +437,8 @@ class MLOpsRuntimeLogDaemon:
             log_processor.set_log_source(self.log_source)
         event_map_id = self.get_event_map_id(log_run_id, log_device_id)
         if self.log_process_event_map.get(event_map_id, None) is None:
-            self.log_process_event_map[event_map_id] = multiprocessing.Event()
+            self.log_process_event_map[event_map_id] = \
+                FedMLSharedResourceManager.get_instance().get_event()
         self.log_process_event_map[event_map_id].clear()
         log_processor.log_process_event = self.log_process_event_map[event_map_id]
         process_name = GeneralConstants.get_log_process_name(log_run_id, log_device_id)
