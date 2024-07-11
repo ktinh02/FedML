@@ -1,6 +1,6 @@
 import json
 import logging
-import multiprocessing
+import multiprocess as multiprocessing
 import os
 import platform
 import random
@@ -449,12 +449,26 @@ class FedMLSchedulerBaseJobRunner(ABC):
         return is_bootstrap_run_ok
 
     def check_runner_stop_event(self):
-        if self.run_process_event.is_set():
-            logging.info("Received stopping event.")
+        should_stop = False
+        try:
+            if self.run_process_event is not None and self.run_process_event.is_set():
+                logging.info("Received stopping event.")
+                should_stop = True
+        except Exception as e:
+            should_stop = True
+
+        if should_stop:
             raise RunnerError("Runner stopped")
 
-        if self.run_process_completed_event.is_set():
-            logging.info("Received completed event.")
+        should_completed = False
+        try:
+            if self.run_process_completed_event is not None and self.run_process_completed_event.is_set():
+                logging.info("Received completed event.")
+                should_completed = True
+        except Exception as e:
+            should_completed = True
+
+        if should_completed:
             raise RunnerCompletedError("Runner completed")
 
     def trigger_stop_event(self):

@@ -1,5 +1,5 @@
 
-from multiprocessing import Process
+from multiprocess import Process
 from ..comm_utils import sys_utils
 from ..comm_utils.job_cleanup import JobCleanup
 from ....core.mlops import MLOpsRuntimeLog, MLOpsMetrics

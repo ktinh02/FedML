@@ -1,11 +1,11 @@
 import base64
 import json
 import logging
-import multiprocessing
+import multiprocess as multiprocessing
 import platform
 import time
 from abc import ABC
-from multiprocessing import Process
+from multiprocess import Process
 
 import fedml
 from fedml.core.mlops import MLOpsRuntimeLogDaemon

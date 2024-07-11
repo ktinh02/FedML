@@ -1,4 +1,5 @@
-import multiprocessing
+import multiprocess as multiprocessing
+import platform
 
 
 class FedMLSharedResourceManager:
@@ -24,8 +25,14 @@ class FedMLSharedResourceManager:
             self.shared_process_manager = multiprocessing.Manager()
         return self.shared_process_manager
 
+    def set_shared_process_manager(self, process_manager):
+        self.shared_process_manager = process_manager
+
     def get_queue(self):
         return self.get_shared_process_manager().Queue()
 
     def get_event(self):
+        if platform.system() == "Windows":
+            return self.get_shared_process_manager().Event()
+
         return multiprocessing.Event()

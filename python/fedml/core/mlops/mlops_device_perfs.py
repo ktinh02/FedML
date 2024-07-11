@@ -7,7 +7,7 @@ import traceback
 import uuid
 from os.path import expanduser
 
-import multiprocessing
+import multiprocess as multiprocessing
 import psutil
 import setproctitle
 
@@ -73,10 +73,15 @@ class MLOpsDevicePerfStats(object):
             self.device_realtime_stats_event.set()
 
     def should_stop_device_realtime_stats(self):
-        if self.device_realtime_stats_event is not None and self.device_realtime_stats_event.is_set():
-            return True
+        should_stop = False
 
-        return False
+        try:
+            if self.device_realtime_stats_event is not None and self.device_realtime_stats_event.is_set():
+                should_stop = True
+        except Exception as e:
+            should_stop = True
+
+        return should_stop
 
     def setup_realtime_stats_process(self, sys_args):
         perf_stats = MLOpsDevicePerfStats()

@@ -1,7 +1,7 @@
 import logging
 import platform
 
-import multiprocessing
+import multiprocess as multiprocessing
 import os
 import random
 
@@ -37,7 +37,7 @@ from .core.common.ml_engine_backend import MLEngineBackend
 _global_training_type = None
 _global_comm_backend = None
 
-__version__ = "0.8.51b9"
+__version__ = "0.8.51b18"
 
 
 # This is the deployment environment used for different roles (RD/PM/BD/Public Developers). Potential VALUE: local, dev, test, release

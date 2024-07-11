@@ -4,7 +4,7 @@ import platform
 import time
 
 from enum import Enum, unique
-import multiprocessing
+import multiprocess as multiprocessing
 import queue
 
 import setproctitle
@@ -122,7 +122,7 @@ class FedMLStatusCenter(object):
         self.status_event.clear()
         self.status_sender_message_center_queue = sender_message_center_queue
         self.status_listener_message_center_queue = listener_message_center_queue
-        self.status_runner = self
+        self.status_runner = self.get_status_runner()
         process_name = GeneralConstants.get_status_center_process_name(
             f'{"deploy" if self.is_deployment_status_center else "launch"}_'
             f'{"slave" if is_slave_agent else "master"}_agent')
@@ -150,8 +150,16 @@ class FedMLStatusCenter(object):
             self.status_event.set()
 
     def check_status_stop_event(self):
-        if self.status_event is not None and self.status_event.is_set():
-            logging.info("Received status center stopping event.")
+        should_stop = False
+
+        try:
+            if self.status_event is not None and self.status_event.is_set():
+                logging.info("Received status center stopping event.")
+                should_stop = True
+        except Exception as e:
+            should_stop = True
+
+        if should_stop:
             raise StatusCenterStoppedException("Status center stopped (for sender)")
 
     def send_message(self, topic, payload, run_id=None):
@@ -292,6 +300,7 @@ class FedMLStatusCenter(object):
                         f"payload {message_entity.payload}, {traceback.format_exc()}")
                 else:
                     logging.info(f"Failed to process the status: {traceback.format_exc()}")
+                time.sleep(0.5)
 
     def run_status_dispatcher_in_slave(self, status_event, status_queue,
                                        sender_message_center_queue,
@@ -403,6 +412,7 @@ class FedMLStatusCenter(object):
                         f"payload {message_entity.payload}, {traceback.format_exc()}")
                 else:
                     logging.info(f"Failed to process the status: {traceback.format_exc()}")
+                time.sleep(0.5)
 
     def register_job_launch_message(self, topic, payload):
         message_entity = FedMLMessageEntity(topic=topic, payload=payload)

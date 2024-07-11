@@ -7,7 +7,7 @@ import subprocess
 import threading
 import time
 import uuid
-from multiprocessing import Process
+from multiprocess import Process
 
 import requests
 

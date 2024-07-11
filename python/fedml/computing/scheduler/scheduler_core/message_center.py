@@ -6,7 +6,7 @@ import threading
 import time
 import traceback
 import uuid
-import multiprocessing
+import multiprocess as multiprocessing
 import queue
 from os.path import expanduser
 
@@ -171,13 +171,31 @@ class FedMLMessageCenter(object):
             self.listener_message_event.set()
 
     def check_message_stop_event(self):
-        if self.message_event is not None and self.message_event.is_set():
-            logging.info("Received message center stopping event.")
-            raise MessageCenterStoppedException("Message center stopped (for sender)")
+        should_stop = False
+        raise_text = ""
+        raise_sender_text = "Message center stopped (for sender)"
+        raise_listener_text = "Message center stopped (for listener)"
 
-        if self.listener_message_event is not None and self.listener_message_event.is_set():
-            logging.info("Received message center stopping event.")
-            raise MessageCenterStoppedException("Message center stopped (for listener)")
+        try:
+            if self.message_event is not None and self.message_event.is_set():
+                logging.info("Received message center stopping event.")
+                raise_text = raise_sender_text
+                should_stop = True
+        except Exception as e:
+            should_stop = True
+            raise_text = raise_sender_text
+
+        try:
+            if self.listener_message_event is not None and self.listener_message_event.is_set():
+                logging.info("Received message center stopping event.")
+                raise_text = raise_listener_text
+                should_stop = True
+        except Exception as e:
+            should_stop = True
+            raise_text = raise_listener_text
+
+        if should_stop:
+            raise MessageCenterStoppedException(raise_text)
 
     def send_message(self, topic, payload, run_id=None):
         message_entity = FedMLMessageEntity(topic=topic, payload=payload, run_id=run_id)
@@ -274,6 +292,7 @@ class FedMLMessageCenter(object):
                     )
                 else:
                     logging.info(f"Failed to send the message with body {message_body}, {traceback.format_exc()}")
+                time.sleep(0.5)
 
         self.release_sender_mqtt_mgr()
 
@@ -354,7 +373,7 @@ class FedMLMessageCenter(object):
         self.listener_message_event = FedMLSharedResourceManager.get_instance().get_event()
         self.listener_message_event.clear()
         self.listener_agent_config = agent_config
-        message_runner = self
+        message_runner = self.get_message_runner()
         message_runner.listener_agent_config = agent_config
         process_name = GeneralConstants.get_message_center_listener_process_name(message_center_name)
         if platform.system() == "Windows":
@@ -376,9 +395,17 @@ class FedMLMessageCenter(object):
         self.listener_message_center_process.start()
 
     def check_listener_message_stop_event(self):
-        if self.listener_message_event is not None and self.listener_message_event.is_set():
-            logging.info("Received listener message center stopping event.")
+        should_stop = False
+        try:
+            if self.listener_message_event is not None and self.listener_message_event.is_set():
+                should_stop = True
+                logging.info("Received listener message center stopping event.")
+        except Exception as e:
+            should_stop = True
+
+        if should_stop:
             raise MessageCenterStoppedException("Message center stopped (for listener)")
+
 
     def listener_message_dispatch_center(self, topic, payload):
         self.receive_message_json(topic, payload)
@@ -482,6 +509,7 @@ class FedMLMessageCenter(object):
                         f"payload {message_entity.payload}, {traceback.format_exc()}")
                 else:
                     logging.info(f"Failed to dispatch messages:  {traceback.format_exc()}")
+                time.sleep(0.5)
         self.release_listener_mqtt_mgr()
 
     def cache_message_record(self, message_record, is_sender=True):

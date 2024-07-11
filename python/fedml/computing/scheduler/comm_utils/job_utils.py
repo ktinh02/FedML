@@ -574,6 +574,8 @@ class JobRunnerUtils(Singleton):
             if docker_args.username != "" and docker_args.registry != "":
                 client.login(username=docker_args.username, password=docker_args.password, registry=docker_args.registry)
         except Exception as e:
+            if platform.system() == "Windows":
+                return None
             raise Exception(f"Failed to connect to the docker daemon, please ensure that you have "
                             f"installed Docker Desktop or Docker Engine, and the docker is running. Exception {e}")
         return client
@@ -581,6 +583,7 @@ class JobRunnerUtils(Singleton):
     @staticmethod
     def remove_run_container_if_exists(container_name: str, client: DockerClient):
 
+        exist_container_obj = None
         try:
             exist_container_obj = client.containers.get(container_name)
             logging.info(f"Container {container_name} found")
@@ -589,6 +592,8 @@ class JobRunnerUtils(Singleton):
             exist_container_obj = None
         except docker.errors.APIError:
             raise Exception("Failed to get the container object")
+        except Exception as e:
+            pass
 
         if exist_container_obj is not None:
             client.api.remove_container(exist_container_obj.id, v=True, force=True)

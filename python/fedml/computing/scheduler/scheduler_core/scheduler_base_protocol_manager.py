@@ -1,13 +1,14 @@
 
 import json
 import logging
-import multiprocessing
 import os
+import platform
 import sys
 import time
 import traceback
 import uuid
 import fedml
+from .shared_resource_manager import FedMLSharedResourceManager
 from ..comm_utils.run_process_utils import RunProcessUtils
 from ....core.mlops.mlops_runtime_log import MLOpsRuntimeLog
 from ....core.distributed.communication.mqtt.mqtt_manager import MqttManager
@@ -289,7 +290,15 @@ class FedMLSchedulerBaseProtocolManager(FedMLMessageCenter, FedMLStatusCenter, A
         # Generate the protocol manager instance and set the attribute values.
         return None
 
+    # In order to avoid the following crash issue on window platform.
+    # "TypeError: cannot pickle 'weakref' object".
+    # We should clone current instance for start a new process
     def get_message_runner(self):
+        if platform.system() != "Windows":
+            if self.message_status_runner is None:
+                self.message_status_runner = self
+            return self
+
         if self.message_status_runner is not None:
             return self.message_status_runner
 
@@ -299,6 +308,11 @@ class FedMLSchedulerBaseProtocolManager(FedMLMessageCenter, FedMLStatusCenter, A
         return self.message_status_runner
 
     def get_status_runner(self):
+        if platform.system() != "Windows":
+            if self.message_status_runner is None:
+                self.message_status_runner = self
+            return self
+
         if self.message_status_runner is None:
             self.get_message_runner()
             if self.message_status_runner is not None:

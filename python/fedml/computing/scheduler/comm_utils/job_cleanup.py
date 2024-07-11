@@ -1,6 +1,6 @@
 import logging
 import traceback
-from multiprocessing import Process
+from multiprocess import Process
 
 from fedml.computing.scheduler.comm_utils.constants import SchedulerConstants
 from fedml.computing.scheduler.scheduler_core.compute_cache_manager import ComputeCacheManager

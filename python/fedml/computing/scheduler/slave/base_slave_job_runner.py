@@ -1,6 +1,6 @@
 import json
 import logging
-import multiprocessing
+import multiprocess as multiprocessing
 import os
 import platform
 import time
@@ -261,8 +261,7 @@ class FedMLBaseSlaveJobRunner(FedMLSchedulerBaseJobRunner, ABC):
         run_id_str = str(run_id)
         self.run_process_event = FedMLSharedResourceManager.get_instance().get_event()
         client_runner.run_process_event = self.run_process_event
-        self.run_process_completed_event = \
-            FedMLSharedResourceManager.get_instance().get_event()
+        self.run_process_completed_event = FedMLSharedResourceManager.get_instance().get_event()
         client_runner.run_process_completed_event = self.run_process_completed_event
         client_runner.server_id = request_json.get("server_id", "0")
         self.run_extend_queue_list = self._generate_extend_queue_list()
@@ -281,3 +280,4 @@ class FedMLBaseSlaveJobRunner(FedMLSchedulerBaseJobRunner, ABC):
             ))
         self.run_process.start()
         return self.run_process
+

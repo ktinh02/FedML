@@ -1,6 +1,6 @@
 import json
 
-from multiprocessing import Process
+from multiprocess import Process
 import os
 import threading
 

@@ -1,6 +1,6 @@
 import json
 import logging
-import multiprocessing
+import multiprocess as multiprocessing
 import platform
 import queue
 import os

@@ -1,5 +1,5 @@
 import json
-import multiprocessing
+import multiprocess as multiprocessing
 import os
 import time
 from dataclasses import dataclass, asdict

@@ -79,6 +79,7 @@ class FedMLBaseSlaveAgent(ABC):
     def logout():
         GeneralConstants.cleanup_run_process(None)
         sys_utils.cleanup_all_fedml_client_api_processes()
+        sys_utils.cleanup_all_fedml_related_processes()
 
     def _create_protocol_manager(self, login_result):
         if self.protocol_mgr is not None:

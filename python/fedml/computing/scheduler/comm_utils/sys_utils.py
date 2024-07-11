@@ -534,6 +534,29 @@ def cleanup_model_monitor_processes(run_id, end_point_name, model_id, model_name
             pass
 
 
+def cleanup_all_fedml_related_processes():
+    # Cleanup all fedml related processes
+    for process in psutil.process_iter():
+        try:
+            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+            find_fedml_process = False
+            if str(pinfo["name"]).find("fedml-process") != -1:
+                find_fedml_process = True
+            for cmd in pinfo["cmdline"]:
+                if str(cmd).find("fedml-process") != -1 or \
+                        str(cmd).find("client_login.py") != -1:
+                    find_fedml_process = True
+                    break
+
+            if find_fedml_process:
+                if platform.system() == 'Windows':
+                    os.system("taskkill /PID {} /T /F".format(process.pid))
+                else:
+                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+        except Exception as e:
+            pass
+
+
 def get_process_running_count(process_name):
     count = 0
     for process in psutil.process_iter():
