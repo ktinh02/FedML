@@ -159,7 +159,7 @@ class ClientConstants(object):
     DEPLOY_TIMEOUT_SEC_KEY = "deploy_timeout_sec"
     DEPLOY_TIMEOUT_SEC_DEFAULT = 600
 
-    ENABLE_SERVERLESS_CONTAINER_KEY = "enable_serverless_container"
+    EXPOSE_SUBDOMAINS_KEY = "expose_subdomains"
 
     CUSTOMIZED_VOLUMES_MOUNT_KEY = "volumes"
     CUSTOMIZED_VOLUMES_PATH_FROM_WORKSPACE_KEY = "workspace_path"

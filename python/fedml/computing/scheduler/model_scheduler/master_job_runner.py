@@ -763,7 +763,7 @@ class FedMLDeployMasterJobRunner(FedMLBaseMasterJobRunner, FedMLDeployJobRunnerM
         if self.deployed_replica_payload is not None:
             payload_json = self.deployed_replica_payload
             enable_custom_path = payload_json["model_metadata"].get(
-                ServerConstants.ENABLE_SERVERLESS_CONTAINER_KEY, False)
+                ServerConstants.EXPOSE_SUBDOMAINS_KEY, False)
             if enable_custom_path:
                 identifier = "custom_inference"
 

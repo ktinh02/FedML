@@ -1,6 +1,6 @@
 # Required
 workspace: "./"                     # We will pacakge all the files in the workspace directory
-enable_serverless_container: true   # Identify whether to use serverless container
+expose_subdomains: true             # For customized image, if you want to route all the subdomains, set to true. e.g. localhost:2345/{all-subdomain}
 inference_image_name: ""            # Container image name
 container_run_command: ""           # str or list, similar to CMD in the dockerfile
 port: 80                            # Service port, currently you can only indicate one arbitrary port

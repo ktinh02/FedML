@@ -1,6 +1,6 @@
 workspace: "./"
 
-enable_serverless_container: true
+expose_subdomains: true
 inference_image_name: "fedml/llama3-8b-tensorrtllm"
 
 # If you put the model repository in $workspace/model_repository, it will be mounted to /home/fedml/models_serving/model_repository

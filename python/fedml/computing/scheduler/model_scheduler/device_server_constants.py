@@ -151,7 +151,7 @@ class ServerConstants(object):
     DEVICE_DIFF_REPLACE_OPERATION = "op: replace"
 
     # Worker comfig yaml related
-    ENABLE_SERVERLESS_CONTAINER_KEY = "enable_serverless_container"
+    EXPOSE_SUBDOMAINS_KEY = "expose_subdomains"
 
     @staticmethod
     def get_fedml_home_dir():
