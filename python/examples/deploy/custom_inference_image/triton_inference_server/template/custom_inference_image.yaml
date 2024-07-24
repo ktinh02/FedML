@@ -1,6 +1,6 @@
 workspace: "./"
 
-enable_serverless_container: true
+expose_subdomains: true
 inference_image_name: "nvcr.io/nvidia/tritonserver:24.05-py3"
 
 volumes:

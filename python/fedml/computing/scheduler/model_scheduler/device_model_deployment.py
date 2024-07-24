@@ -88,7 +88,7 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
             registry_user_name, registry_user_password = parse_image_registry_related_config(config)
 
         # Service app related
-        dst_bootstrap_dir, dst_model_serving_dir, relative_entry_fedml_format, enable_serverless_container, \
+        dst_bootstrap_dir, dst_model_serving_dir, relative_entry_fedml_format, expose_subdomains, \
             customized_image_entry_cmd, customized_readiness_check, customized_liveliness_check, customized_uri = \
             handle_container_service_app(config, model_storage_local_path)
 
@@ -255,7 +255,7 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
     model_metadata = ret_model_metadata
     model_metadata["liveliness_check"] = customized_liveliness_check
     model_metadata["readiness_check"] = customized_readiness_check
-    model_metadata[ClientConstants.ENABLE_SERVERLESS_CONTAINER_KEY] = enable_serverless_container
+    model_metadata[ClientConstants.EXPOSE_SUBDOMAINS_KEY] = expose_subdomains
     logging.info(f"[Worker][Replica{replica_rank}] Model deployment is successful with inference_output_url: "
                  f"{inference_output_url}, model_metadata: {model_metadata}, model_config: {ret_model_config}")
 
@@ -616,13 +616,13 @@ def handle_container_service_app(config, model_storage_local_path):
     relative_entry_fedml_format = config.get('entry_point', "")
 
     # User indicate either fedml format python main entry filename or entry command
-    enable_serverless_container = config.get(ClientConstants.ENABLE_SERVERLESS_CONTAINER_KEY, False)
+    expose_subdomains = config.get(ClientConstants.EXPOSE_SUBDOMAINS_KEY, False)
     customized_image_entry_cmd = config.get('container_run_command', None)  # Could be str or list
     customized_readiness_check = config.get('readiness_probe', ClientConstants.READINESS_PROBE_DEFAULT)
     customized_liveliness_check = config.get('liveness_probe', ClientConstants.LIVENESS_PROBE_DEFAULT)
     customized_uri = config.get(ClientConstants.CUSTOMIZED_SERVICE_KEY, "")
 
-    return (dst_bootstrap_dir, dst_model_serving_dir, relative_entry_fedml_format, enable_serverless_container,
+    return (dst_bootstrap_dir, dst_model_serving_dir, relative_entry_fedml_format, expose_subdomains,
             customized_image_entry_cmd, customized_readiness_check, customized_liveliness_check, customized_uri)
 
 
