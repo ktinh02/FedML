@@ -11,6 +11,7 @@ from fedml.computing.scheduler.comm_utils.sys_utils import cleanup_all_fedml_cli
     daemon_ota_upgrade
 from fedml.computing.scheduler.slave.client_constants import ClientConstants
 from fedml.computing.scheduler.comm_utils.run_process_utils import RunProcessUtils
+from fedml.api.constants import MarketplaceType
 
 
 if __name__ == "__main__":
@@ -26,6 +27,8 @@ if __name__ == "__main__":
     parser.add_argument("--no_gpu_check", "-ngc", type=int, default=1)
     parser.add_argument("--local_on_premise_platform_host", "-lp", type=str, default="127.0.0.1")
     parser.add_argument("--local_on_premise_platform_port", "-lpp", type=int, default=80)
+    parser.add_argument("--market_place_type", "-mpt", type=int, default=MarketplaceType.SECURE.value)
+    parser.add_argument("--price_per_hour", "-pph", type=float, default=0.0)
 
     args = parser.parse_args()
     args.user = args.user
@@ -84,7 +87,12 @@ if __name__ == "__main__":
                     "-k",
                     args.api_key,
                     "-ngc",
-                    str(args.no_gpu_check)
+                    str(args.no_gpu_check),
+                    "-mpt",
+                    args.marketplace_type,
+                    "-pph",
+                    args.price_per_hour
+
                 ]
             )
             ret_code, exec_out, exec_err = ClientConstants.get_console_sys_out_pipe_err_results(login_pid)

@@ -48,7 +48,8 @@ class FedMLAccountManager(Singleton):
     def get_instance():
         return FedMLAccountManager()
 
-    def login(self, user_id, api_key="", device_id=None, os_name=None, role=None, runner_cmd=None):
+    def login(self, user_id, api_key="", device_id=None, os_name=None, role=None, runner_cmd=None, marketplace_type=None,
+              price_per_hour=None):
         # Build the agent args
         self.build_agent_args(
             user_id, api_key=api_key, device_id=device_id, os_name=os_name, role=role, runner_cmd=runner_cmd
@@ -93,9 +94,9 @@ class FedMLAccountManager(Singleton):
             # noinspection PyBroadException
             try:
                 edge_id, user_name, extra_url, general_edge_id = FedMLAccountManager.bind_account_and_device_id(
-                    service_config["ml_ops_config"]["EDGE_BINDING_URL"], self.agent_args.account_id,
-                    self.agent_args.unique_device_id, self.agent_args.os_name,
-                    api_key=api_key, role=role
+                    url=service_config["ml_ops_config"]["EDGE_BINDING_URL"], account_id=self.agent_args.account_id,
+                    device_id=self.agent_args.unique_device_id, os_name=self.agent_args.os_name,
+                    api_key=api_key, role=role, marketplace_type=marketplace_type, price_per_hour=price_per_hour
                 )
                 if edge_id > 0:
                     break
@@ -308,7 +309,7 @@ class FedMLAccountManager(Singleton):
 
     @staticmethod
     def bind_account_and_device_id(
-            url, account_id, device_id, os_name, api_key="",
+            url, account_id, device_id, marketplace_type, price_per_hour, os_name,api_key="",
             role=ROLE_EDGE_SERVER):
         ip = requests.get('https://checkip.amazonaws.com').text.strip()
         fedml_ver, exec_path, os_ver, cpu_info, python_ver, torch_ver, mpi_installed, \
@@ -335,6 +336,11 @@ class FedMLAccountManager(Singleton):
                             "available_mem": available_mem, "total_mem": total_mem,
                             "cpu_count": cpu_count, "gpu_count": 0, "host_name": host_name}
         }
+
+        if role == FedMLAccountManager.ROLE_GPU_PROVIDER:
+            json_params["marketplace_type"] = marketplace_type
+            json_params["price_per_hour"] = price_per_hour
+
         if gpu_count > 0:
             if gpu_total_mem is not None:
                 json_params["gpu"] = gpu_info if gpu_info is not None else "" + ", Total GPU Memory: " + gpu_total_mem

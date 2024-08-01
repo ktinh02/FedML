@@ -15,7 +15,7 @@ Usages:
 """
 from typing import List, Tuple
 
-from fedml.api.constants import RunStatus
+from fedml.api.constants import RunStatus, MarketplaceType
 from fedml.api.fedml_response import FedMLResponse
 from fedml.api.modules import launch, utils, build, device, logs, diagnosis, cluster, run, train, federate, storage, \
     model as model_module  # Since "model" has conflict with one of the input parameters, we need to rename it
@@ -214,9 +214,10 @@ def fedml_build(platform, type, source_folder, entry_point, config_folder, dest_
 def login(api_key, computing, server, supplier,
           master_inference_gateway_port: int = ServerConstants.MODEL_INFERENCE_DEFAULT_PORT,
           worker_inference_proxy_port: int = ClientConstants.LOCAL_CLIENT_API_PORT,
-          worker_connection_type: str = ClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT):
+          worker_connection_type: str = ClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT,
+          marketplace_type: str = MarketplaceType.SECURE.value, price_per_hour: float = 0.0):
     device_bind(api_key, computing, server, supplier, master_inference_gateway_port, worker_inference_proxy_port,
-                worker_connection_type)
+                worker_connection_type, marketplace_type, price_per_hour)
 
 
 def logout(computing, server):
@@ -224,9 +225,11 @@ def logout(computing, server):
 
 
 def device_bind(api_key, computing, server, supplier, master_inference_gateway_port, worker_inference_proxy_port,
-                worker_connection_type):
-    device.bind(api_key, computing, server, supplier, master_inference_gateway_port, worker_inference_proxy_port,
-                worker_connection_type)
+                worker_connection_type, marketplace_type, price_per_hour):
+    device.bind(api_key=api_key, computing=computing, server=server, supplier=supplier,
+                master_inference_gateway_port=master_inference_gateway_port,
+                worker_inference_proxy_port=worker_inference_proxy_port, worker_connection_type=worker_connection_type,
+                marketplace_type=marketplace_type, price_per_hour=price_per_hour)
 
 
 def device_unbind(computing, server):

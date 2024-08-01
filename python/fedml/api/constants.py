@@ -1,6 +1,22 @@
 from enum import Enum, unique
 
 
+class MarketplaceType(Enum):
+    SECURE = 1
+    COMMUNITY = 2
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def from_str(cls, name: str):
+        """Get the enum member from a string."""
+        if name.upper() in cls.__members__:
+            return cls[name.upper()]
+        else:
+            raise ValueError(f"Invalid marketplace type: {name}")
+
+
 class ApiConstants:
     RESOURCE_MATCHED_STATUS_MATCHED = "MATCHED"
     RESOURCE_MATCHED_STATUS_JOB_URL_ERROR = "ERROR_JOB_URL"
@@ -106,4 +122,3 @@ class RunStatus(Enum):
             if run_status.value == run_status_str:
                 return run_status
         return cls.UNDETERMINED
-

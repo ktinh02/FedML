@@ -1,8 +1,10 @@
 import os
+from enum import Enum
 
 import click
 
 import fedml.api
+from fedml.api import MarketplaceType
 from fedml.api.modules.utils import authenticate
 from fedml.computing.scheduler.model_scheduler.device_server_constants import ServerConstants
 from fedml.computing.scheduler.model_scheduler.device_client_constants import ClientConstants
@@ -74,10 +76,29 @@ from fedml.computing.scheduler.model_scheduler.device_client_constants import Cl
     default=ClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT,
     help="The connection type for worker inference proxy.",
 )
+@click.option(
+    "--marketplace_type",
+    "-mpt",
+    type=click.Choice([marketplace_type for marketplace_type in MarketplaceType.__members__]),
+    default=MarketplaceType.SECURE.name,
+    help="Specify the marketplace type: 'SECURE' for Secure Cloud or 'COMMUNITY' for Community Cloud. "
+         "Defaults to Secure Cloud.",
+)
+@click.option(
+    "--price_per_hour",
+    "-pph",
+    type=click.FLOAT,
+    default=0.0,
+    help="Enter the price per GPU per hour as a floating-point number. For example, if the cost of using an H100 node "
+         "for one hour is $1.5 per GPU, then you would input 1.5. Do not multiply this number by the total number of "
+         "GPUs in the node, as the system will automatically detect the number of GPUs and include it in the cost "
+         "calculation. Default is 0.0."
+         "Optionally, you can also set this price later through supplier page on the FEDML® Nexus AI Platform."
+)
 def fedml_login(
         api_key, version, compute_node, server, provider, deploy_worker_num,
         local_on_premise_platform, local_on_premise_platform_port,
-        master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type
+        master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type, marketplace_type, cost
 ):
     fedml.set_env_version(version)
     fedml.set_local_on_premise_platform_host(local_on_premise_platform)
@@ -92,4 +113,4 @@ def fedml_login(
         pass
     os.environ["FEDML_MODEL_WORKER_NUM"] = str(deploy_worker_num)
     fedml.api.login(api_key, compute_node, server, provider, master_inference_gateway_port,
-                    worker_inference_proxy_port, worker_connection_type)
+                    worker_inference_proxy_port, worker_connection_type, marketplace_type, cost)
