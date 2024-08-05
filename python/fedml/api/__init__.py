@@ -15,12 +15,12 @@ Usages:
 """
 from typing import List, Tuple
 
-from fedml.api.constants import RunStatus, MarketplaceType
+from fedml.api.constants import RunStatus
 from fedml.api.fedml_response import FedMLResponse
 from fedml.api.modules import launch, utils, build, device, logs, diagnosis, cluster, run, train, federate, storage, \
     model as model_module  # Since "model" has conflict with one of the input parameters, we need to rename it
-from fedml.api.modules.launch import FeatureEntryPoint
 from fedml.api.modules.storage import StorageMetadata
+from fedml.computing.scheduler.scheduler_core.general_constants import MarketplaceType
 from fedml.computing.scheduler.scheduler_entry.cluster_manager import FedMLClusterModelList
 from fedml.computing.scheduler.scheduler_entry.run_manager import FedMLRunStartedModel, FedMLGpuDevices, \
     FedMLRunModelList, FeatureEntryPoint

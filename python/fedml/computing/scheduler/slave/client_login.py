@@ -1,7 +1,7 @@
 import argparse
 import os
 import fedml
-from fedml.api import MarketplaceType
+from fedml.computing.scheduler.scheduler_core.general_constants import MarketplaceType
 from fedml.computing.scheduler.slave.slave_agent import FedMLLaunchSlaveAgent
 
 
