@@ -177,11 +177,11 @@ def _bind(
                 "-k",
                 user_api_key,
                 "-ngc",
-                "1"
+                "1",
                 "-mpt",
                 marketplace_type,
                 "-pph",
-                price_per_hour
+                str(price_per_hour)
             ]
         ).pid
         sys_utils.save_login_process(ClientConstants.LOCAL_HOME_RUNNER_DIR_NAME,

@@ -4,10 +4,10 @@ from enum import Enum
 import click
 
 import fedml.api
-from fedml.api import MarketplaceType
 from fedml.api.modules.utils import authenticate
 from fedml.computing.scheduler.model_scheduler.device_server_constants import ServerConstants
 from fedml.computing.scheduler.model_scheduler.device_client_constants import ClientConstants
+from fedml.computing.scheduler.scheduler_core.general_constants import MarketplaceType
 
 
 @click.command("login", help="Login the FedML® Nexus AI Platform")
@@ -98,7 +98,7 @@ from fedml.computing.scheduler.model_scheduler.device_client_constants import Cl
 def fedml_login(
         api_key, version, compute_node, server, provider, deploy_worker_num,
         local_on_premise_platform, local_on_premise_platform_port,
-        master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type, marketplace_type, cost
+        master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type, marketplace_type, price_per_hour
 ):
     fedml.set_env_version(version)
     fedml.set_local_on_premise_platform_host(local_on_premise_platform)
@@ -113,4 +113,4 @@ def fedml_login(
         pass
     os.environ["FEDML_MODEL_WORKER_NUM"] = str(deploy_worker_num)
     fedml.api.login(api_key, compute_node, server, provider, master_inference_gateway_port,
-                    worker_inference_proxy_port, worker_connection_type, marketplace_type, cost)
+                    worker_inference_proxy_port, worker_connection_type, marketplace_type, price_per_hour)

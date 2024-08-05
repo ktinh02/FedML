@@ -12,7 +12,7 @@ import fedml
 from fedml.computing.scheduler.comm_utils import sys_utils, security_utils
 from fedml.computing.scheduler.comm_utils.constants import SchedulerConstants
 from fedml.computing.scheduler.comm_utils.sys_utils import get_sys_runner_info
-from fedml.computing.scheduler.scheduler_core.general_constants import GeneralConstants
+from fedml.computing.scheduler.scheduler_core.general_constants import GeneralConstants, MarketplaceType
 from fedml.core.common.singleton import Singleton
 from fedml.core.mlops import MLOpsConfigs
 
@@ -338,8 +338,8 @@ class FedMLAccountManager(Singleton):
         }
 
         if role == FedMLAccountManager.ROLE_GPU_PROVIDER:
-            json_params["marketplace_type"] = marketplace_type
-            json_params["price_per_hour"] = price_per_hour
+            json_params["marketplace_type"] = MarketplaceType.from_str(marketplace_type).value
+            json_params["price_per_hour"] = float(price_per_hour)
 
         if gpu_count > 0:
             if gpu_total_mem is not None:

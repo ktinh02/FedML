@@ -215,7 +215,7 @@ def login(api_key, computing, server, supplier,
           master_inference_gateway_port: int = ServerConstants.MODEL_INFERENCE_DEFAULT_PORT,
           worker_inference_proxy_port: int = ClientConstants.LOCAL_CLIENT_API_PORT,
           worker_connection_type: str = ClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT,
-          marketplace_type: str = MarketplaceType.SECURE.value, price_per_hour: float = 0.0):
+          marketplace_type: str = MarketplaceType.SECURE.name, price_per_hour: float = 0.0):
     device_bind(api_key, computing, server, supplier, master_inference_gateway_port, worker_inference_proxy_port,
                 worker_connection_type, marketplace_type, price_per_hour)
 
