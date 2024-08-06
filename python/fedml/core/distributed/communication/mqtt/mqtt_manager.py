@@ -11,6 +11,7 @@ from fedml.core.mlops.mlops_profiler_event import MLOpsProfilerEvent
 
 import fedml
 
+
 class MqttManager(object):
     def __init__(self, host, port, user, pwd, keepalive_time,
                  client_id, last_will_topic=None, last_will_msg=None,

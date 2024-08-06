@@ -1,4 +1,3 @@
-
 import argparse
 import os
 import time
@@ -13,7 +12,6 @@ from fedml.computing.scheduler.scheduler_core.general_constants import Marketpla
 from fedml.computing.scheduler.slave.client_constants import ClientConstants
 from fedml.computing.scheduler.comm_utils.run_process_utils import RunProcessUtils
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--type", "-t", help="Login or logout to MLOps platform")
@@ -27,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--no_gpu_check", "-ngc", type=int, default=1)
     parser.add_argument("--local_on_premise_platform_host", "-lp", type=str, default="127.0.0.1")
     parser.add_argument("--local_on_premise_platform_port", "-lpp", type=int, default=80)
-    parser.add_argument("--market_place_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
+    parser.add_argument("--marketplace_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
     parser.add_argument("--price_per_hour", "-pph", type=str, default="0.0")
 
     args = parser.parse_args()
@@ -62,7 +60,6 @@ if __name__ == "__main__":
             logging.error(f"Cleanup failed | Exception: {e}")
             pass
 
-
         # daemon_ota_upgrade(args)
 
         if platform.system() == "Windows":
@@ -92,7 +89,6 @@ if __name__ == "__main__":
                     args.marketplace_type,
                     "-pph",
                     args.price_per_hour
-
                 ]
             )
             ret_code, exec_out, exec_err = ClientConstants.get_console_sys_out_pipe_err_results(login_pid)
@@ -101,7 +97,8 @@ if __name__ == "__main__":
             login_logs = os.path.join(ClientConstants.get_log_file_dir(), "login.log")
             run_login_cmd = f"nohup {get_python_program()} -W ignore {login_cmd} -t login -u {args.user} " \
                             f"-v {args.version} -r {args.role} -id {args.device_id} " \
-                            f"-k {args.api_key} -ngc {str(args.no_gpu_check)} > {login_logs} 2>&1 &"
+                            f"-k {args.api_key} -ngc {str(args.no_gpu_check)} -mpt {args.marketplace_type} " \
+                            f"-pph {args.price_per_hour} > {login_logs} 2>&1 &"
             if args.os_name != "":
                 run_login_cmd += f" -os {args.os_name}"
             os.system(run_login_cmd)

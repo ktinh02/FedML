@@ -25,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--no_gpu_check", "-ngc", type=int, default=1)
     parser.add_argument("--local_on_premise_platform_host", "-lp", type=str, default="127.0.0.1")
     parser.add_argument("--local_on_premise_platform_port", "-lpp", type=int, default=80)
-    parser.add_argument("--market_place_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
+    parser.add_argument("--marketplace_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
     parser.add_argument("--price_per_hour", "-pph", type=str, default="0.0")
 
     args = parser.parse_args()
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     slave_agent = FedMLLaunchSlaveAgent()
     if args.type == 'login':
         slave_agent.login(userid=args.api_key, api_key=args.api_key, device_id=args.device_id,
-                          os_name=args.os_name, role=args.role, marketplace_type=args.market_place_type,
+                          os_name=args.os_name, role=args.role, marketplace_type=args.marketplace_type,
                           price_per_hour=args.price_per_hour)
     else:
         FedMLLaunchSlaveAgent.logout()
