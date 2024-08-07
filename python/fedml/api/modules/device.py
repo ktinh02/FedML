@@ -19,11 +19,10 @@ from fedml.computing.scheduler.scheduler_entry.resource_manager import FedMLReso
 
 
 def bind(
-        api_key, computing, server, supplier,
+        api_key, computing, server, supplier, marketplace_type, price_per_hour,
         master_inference_gateway_port=DeviceServerConstants.MODEL_INFERENCE_DEFAULT_PORT,
         worker_inference_proxy_port=DeviceClientConstants.LOCAL_CLIENT_API_PORT,
-        worker_connection_type=DeviceClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT
-):
+        worker_connection_type=DeviceClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT):
     userid = api_key
     runner_cmd = "{}"
     device_id = "0"
@@ -48,13 +47,13 @@ def bind(
     _bind(
         userid, computing, server,
         api_key, role, runner_cmd, device_id, os_name,
-        docker, master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type)
+        docker, master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type, marketplace_type,
+        price_per_hour)
 
 
 def _bind(
-        userid, computing, server,
-        api_key, role, runner_cmd, device_id, os_name,
-        docker, master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type):
+        userid, computing, server, api_key, role, runner_cmd, device_id, os_name, docker, master_inference_gateway_port,
+        worker_inference_proxy_port, worker_connection_type, marketplace_type, price_per_hour):
     fedml.load_env()
     if os.getenv(ModuleConstants.ENV_FEDML_INFER_HOST) is None:
         fedml.set_env_kv(ModuleConstants.ENV_FEDML_INFER_HOST, SchedulerConstants.REDIS_INFER_HOST)
@@ -178,7 +177,11 @@ def _bind(
                 "-k",
                 user_api_key,
                 "-ngc",
-                "1"
+                "1",
+                "-mpt",
+                marketplace_type,
+                "-pph",
+                str(price_per_hour)
             ]
         ).pid
         sys_utils.save_login_process(ClientConstants.LOCAL_HOME_RUNNER_DIR_NAME,

@@ -1,5 +1,6 @@
 import logging
 import os
+from enum import Enum
 
 from fedml.computing.scheduler.comm_utils.constants import SchedulerConstants
 from fedml.computing.scheduler.comm_utils.run_process_utils import RunProcessUtils
@@ -7,6 +8,22 @@ from fedml.computing.scheduler.slave.client_constants import ClientConstants
 from fedml.computing.scheduler.master.server_constants import ServerConstants
 from fedml.computing.scheduler.model_scheduler import device_client_constants
 from fedml.computing.scheduler.model_scheduler import device_server_constants
+
+
+class MarketplaceType(Enum):
+    SECURE = 1
+    COMMUNITY = 2
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def from_str(cls, name: str):
+        """Get the enum member from a string."""
+        if name.upper() in cls.__members__:
+            return cls[name.upper()]
+        else:
+            raise ValueError(f"Invalid marketplace type: {name}")
 
 
 class GeneralConstants:
