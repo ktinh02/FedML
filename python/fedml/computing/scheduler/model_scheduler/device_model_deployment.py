@@ -594,6 +594,33 @@ def handle_container_service_app(config, model_storage_local_path):
                         "entry_point will be ignored")
         relative_entry_fedml_format = ""
 
+    # if usr indicates both the customized_image_entry_cmd and bootstrap, we will inject the bootstrap into the entry
+    # Using /bin/bash to run the bootstrap script, there are three legal formats for the customized_image_entry_cmd
+    # However, only the third one is supported in this function
+    """
+    1. CMD ["executable","param1","param2"] (exec form)
+    e.g. 
+        CMD ["python3", "/app/app.py", "--port", "8080"]
+    
+    2. CMD ["param1","param2"] (exec form, as default parameters to ENTRYPOINT)
+    e.g.
+        ENTRYPOINT ["nginx"]
+        CMD ["-g", "daemon off;"]
+        
+    3. CMD command param1 param2
+    e.g.
+        echo "Container is running" && curl http://example.com
+    """
+    if dst_bootstrap_dir != "" and customized_image_entry_cmd is not None:
+        if isinstance(customized_image_entry_cmd, str):
+            if customized_image_entry_cmd == "":
+                # We do not know the original CMD in the Dockerfile and do not want to overwrite it
+                pass
+            else:
+                customized_image_entry_cmd = f"/bin/bash {dst_bootstrap_dir} && {customized_image_entry_cmd}"
+        else:
+            logging.warning("The customized_image_entry_cmd is not a string, skip injecting the bootstrap script")
+
     customized_readiness_check = config.get('readiness_probe', ClientConstants.READINESS_PROBE_DEFAULT)
     customized_liveliness_check = config.get('liveness_probe', ClientConstants.LIVENESS_PROBE_DEFAULT)
     customized_uri = config.get(ClientConstants.CUSTOMIZED_SERVICE_KEY, "")
