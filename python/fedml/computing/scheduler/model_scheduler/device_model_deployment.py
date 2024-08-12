@@ -555,13 +555,16 @@ def handle_volume_mount(volumes, binds, environment, relative_entry_fedml_format
         "mode": "rw"
     }
 
+    logging.info(f"Mounting the source code to the container..., target: {dst_mount_dir}")
+
     if relative_entry_fedml_format != "":
         environment["MAIN_ENTRY"] = relative_entry_fedml_format
 
 
 def handle_container_service_app(config, model_storage_local_path):
     # Bootstrap, job and entrypoint related
-    dst_model_serving_dir = "/home/fedml/models_serving"
+    dst_model_serving_dir = config.get(ClientConstants.CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY,
+                                       "/home/fedml/models_serving")
     bootstrap_cmds_str_frm_yaml = config.get('bootstrap', "")
     job_cmds_str_frm_yaml = config.get('job', "")
 
@@ -569,16 +572,21 @@ def handle_container_service_app(config, model_storage_local_path):
     if bootstrap_cmds_str_frm_yaml != "" or job_cmds_str_frm_yaml != "":
         src_bootstrap_file_path = os.path.join(model_storage_local_path, auto_gen_bootstrap_file_name)
         with open(src_bootstrap_file_path, 'w') as f:
-            f.write("cd /home/fedml/models_serving/\n")
+            f.write(f"cd {dst_model_serving_dir}/\n")
             f.write(bootstrap_cmds_str_frm_yaml)
             f.write("\n")
-            f.write("cd /home/fedml/models_serving/\n")
+            f.write(f"cd {dst_model_serving_dir}/\n")
             f.write(job_cmds_str_frm_yaml)
     else:
         src_bootstrap_file_path = ""
 
     if src_bootstrap_file_path != "":
         dst_bootstrap_dir = os.path.join(dst_model_serving_dir, auto_gen_bootstrap_file_name)
+
+        # User could specify "workspace_mount_path", override the default path
+        if ClientConstants.CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY in config:
+            dst_bootstrap_dir = os.path.join(config[ClientConstants.CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY],
+                                             auto_gen_bootstrap_file_name)
     else:
         dst_bootstrap_dir = ""
 
@@ -617,7 +625,10 @@ def handle_container_service_app(config, model_storage_local_path):
                 # We do not know the original CMD in the Dockerfile and do not want to overwrite it
                 pass
             else:
-                customized_image_entry_cmd = f"/bin/bash {dst_bootstrap_dir} && {customized_image_entry_cmd}"
+                # TODO(Raphael): Try to fix the compatibility issue with the first two formats and
+                #  also the restriction of /bin/bash
+                customized_image_entry_cmd = \
+                    f"/bin/bash -c '/bin/bash {dst_bootstrap_dir} && {customized_image_entry_cmd}'"
         else:
             logging.warning("The customized_image_entry_cmd is not a string, skip injecting the bootstrap script")
 
