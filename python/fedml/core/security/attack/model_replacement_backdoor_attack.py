@@ -38,7 +38,7 @@ class ModelReplacementBackdoorAttack(BaseAttackMethod):
             self.scale_factor_S = args.scale_factor_S
         else:
             self.scale_factor_S = None
-        self.training_round = 1
+        self.training_round = -1
         self.device = fedml.device.get_device(args)
 
     def attack_model(
@@ -47,6 +47,7 @@ class ModelReplacementBackdoorAttack(BaseAttackMethod):
             extra_auxiliary_info: Any = None,
     ):
         participant_num = len(raw_client_grad_list)
+        self.training_round += 1
         if self.attack_training_rounds is not None and self.training_round not in self.attack_training_rounds:
             return raw_client_grad_list
         if self.malicious_client_id is None:
@@ -67,7 +68,6 @@ class ModelReplacementBackdoorAttack(BaseAttackMethod):
             if is_weight_param(k):
                 original_client_model[k] = torch.tensor(gamma * (original_client_model[k] - global_model[k]) + global_model[k]).float().to(self.device)
         raw_client_grad_list.insert(malicious_idx, (num, original_client_model))
-        self.training_round = self.training_round + 1
         return raw_client_grad_list
 
     def compute_gamma(self, global_model, original_client_model):

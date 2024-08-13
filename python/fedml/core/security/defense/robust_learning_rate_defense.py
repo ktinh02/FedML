@@ -28,7 +28,13 @@ class RobustLearningRateDefense(BaseDefenseMethod):
         self.robust_threshold = config.robust_threshold  # e.g., robust threshold = 4
         self.server_learning_rate = 1
 
-    def run(
+    def _compute_robust_learning_rates(self, client_update_sign):
+        client_lr = torch.abs(sum(client_update_sign))
+        client_lr[client_lr < self.robust_threshold] = -self.server_learning_rate
+        client_lr[client_lr >= self.robust_threshold] = self.server_learning_rate
+        return client_lr
+
+    def defend_on_aggregation(
             self,
             raw_client_grad_list: List[Tuple[float, OrderedDict]],
             base_aggregation_func: Callable = None,
@@ -51,9 +57,3 @@ class RobustLearningRateDefense(BaseDefenseMethod):
             client_lr = self._compute_robust_learning_rates(client_update_sign)
             avg_params[k] = client_lr * avg_params[k]
         return avg_params
-
-    def _compute_robust_learning_rates(self, client_update_sign):
-        client_lr = torch.abs(sum(client_update_sign))
-        client_lr[client_lr < self.robust_threshold] = -self.server_learning_rate
-        client_lr[client_lr >= self.robust_threshold] = self.server_learning_rate
-        return client_lr

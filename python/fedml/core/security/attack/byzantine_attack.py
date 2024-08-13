@@ -1,11 +1,12 @@
 from collections import OrderedDict
-
+import random
 import fedml
 import numpy as np
 import torch
 from .attack_base import BaseAttackMethod
 from ..common.utils import is_weight_param, sample_some_clients
 from typing import List, Tuple, Any
+import logging
 
 """
 attack @ server, added by Shanshan, 07/04/2022
@@ -17,9 +18,19 @@ class ByzantineAttack(BaseAttackMethod):
         self.byzantine_client_num = args.byzantine_client_num
         self.attack_mode = args.attack_mode  # random: randomly generate a weight; zero: set the weight to 0
         self.device = fedml.device.get_device(args)
+        self.attack_training_rounds = None  # default: attack happens in every round
+        if hasattr(args, "attack_round_num") and isinstance(args.attack_round_num,
+                                                            int) and args.attack_round_num < args.comm_round:
+            random.seed(args.random_seed)
+            self.attack_training_rounds = random.sample(range(args.comm_round), args.attack_round_num)
+            logging.info(f"attack rounds: {self.attack_training_rounds}")
+        self.current_training_round = -1
 
     def attack_model(self, raw_client_grad_list: List[Tuple[float, OrderedDict]],
-        extra_auxiliary_info: Any = None):
+                     extra_auxiliary_info: Any = None):
+        self.current_training_round += 1
+        if self.attack_training_rounds is not None and self.current_training_round not in self.attack_training_rounds:
+            return raw_client_grad_list
         if len(raw_client_grad_list) < self.byzantine_client_num:
             self.byzantine_client_num = len(raw_client_grad_list)
         byzantine_idxs = sample_some_clients(len(raw_client_grad_list), self.byzantine_client_num)
@@ -29,7 +40,8 @@ class ByzantineAttack(BaseAttackMethod):
         elif self.attack_mode == "random":
             byzantine_local_w = self._attack_random_mode(raw_client_grad_list, byzantine_idxs)
         elif self.attack_mode == "flip":
-            byzantine_local_w = self._attack_flip_mode(raw_client_grad_list, byzantine_idxs, extra_auxiliary_info) # extra_auxiliary_info: global model
+            byzantine_local_w = self._attack_flip_mode(raw_client_grad_list, byzantine_idxs,
+                                                       extra_auxiliary_info)  # extra_auxiliary_info: global model
         else:
             raise NotImplementedError("Method not implemented!")
         return byzantine_local_w
@@ -43,7 +55,8 @@ class ByzantineAttack(BaseAttackMethod):
                 local_sample_number, local_model_params = model_list[i]
                 for k in local_model_params.keys():
                     if is_weight_param(k):
-                        local_model_params[k] = torch.from_numpy(np.zeros(local_model_params[k].size())).float().to(self.device)
+                        local_model_params[k] = torch.from_numpy(np.zeros(local_model_params[k].size())).float().to(
+                            self.device)
                 new_model_list.append((local_sample_number, local_model_params))
         return new_model_list
 
@@ -57,10 +70,10 @@ class ByzantineAttack(BaseAttackMethod):
                 local_sample_number, local_model_params = model_list[i]
                 for k in local_model_params.keys():
                     if is_weight_param(k):
-                        local_model_params[k] = torch.from_numpy(2*np.random.random_sample(size=local_model_params[k].size())-1).float().to(self.device)
+                        local_model_params[k] = torch.from_numpy(
+                            2 * np.random.random_sample(size=local_model_params[k].size()) - 1).float().to(self.device)
                 new_model_list.append((local_sample_number, local_model_params))
         return new_model_list
-
 
     def _attack_flip_mode(self, model_list, byzantine_idxs, global_model):
         new_model_list = []
@@ -71,6 +84,8 @@ class ByzantineAttack(BaseAttackMethod):
                 local_sample_number, local_model_params = model_list[i]
                 for k in local_model_params.keys():
                     if is_weight_param(k):
-                        local_model_params[k] = global_model[k].float().to(self.device) + (global_model[k].float().to(self.device) - local_model_params[k].float().to(self.device))
+                        local_model_params[k] = global_model[k].float().to(self.device) + (
+                                    global_model[k].float().to(self.device) - local_model_params[k].float().to(
+                                self.device))
                 new_model_list.append((local_sample_number, local_model_params))
         return new_model_list
