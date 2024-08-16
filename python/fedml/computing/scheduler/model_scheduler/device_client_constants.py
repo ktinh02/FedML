@@ -162,8 +162,9 @@ class ClientConstants(object):
     EXPOSE_SUBDOMAINS_KEY = "expose_subdomains"
 
     CUSTOMIZED_VOLUMES_MOUNT_KEY = "volumes"
-    CUSTOMIZED_VOLUMES_PATH_FROM_WORKSPACE_KEY = "workspace_path"
-    CUSTOMIZED_VOLUMES_PATH_FROM_CONTAINER_KEY = "mount_path"
+
+    CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY = "workspace_mount_path"
+
     CUSTOMIZED_SERVICE_KEY = "service"
 
     ENV_USER_ENCRYPTED_API_KEY = "FEDML_USER_ENCRYPTED_API_KEY"

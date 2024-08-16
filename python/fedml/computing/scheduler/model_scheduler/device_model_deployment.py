@@ -95,7 +95,7 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
         # Storage related
         src_code_dir = os.path.join(model_storage_local_path, config.get('source_code_dir', ""))
         data_cache_dir_input = config.get('data_cache_dir', "")
-        usr_customized_mount_rule = config.get(ClientConstants.CUSTOMIZED_VOLUMES_MOUNT_KEY, None)
+        usr_customized_workspace_dst = config.get(ClientConstants.CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY, "")
 
         # Others
         extra_envs = config.get('environment_variables', None)
@@ -170,7 +170,7 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
 
     # Handle the default volume mount
     handle_volume_mount(volumes, binds, environment, relative_entry_fedml_format, src_code_dir,
-                        dst_model_serving_dir, usr_customized_mount_rule, host_workspace_root=model_storage_local_path)
+                        dst_model_serving_dir, usr_customized_workspace_dst)
 
     # Host config
     host_config_dict = {
@@ -541,57 +541,30 @@ def _handle_union_volume_mount(binds, volumes, environment, data_cache_dir_input
 
 
 def handle_volume_mount(volumes, binds, environment, relative_entry_fedml_format="", src_code_dir="",
-                        dst_model_serving_dir="", customized_volumes_mount_rule=None, host_workspace_root=""):
+                        dst_model_serving_dir="", usr_customized_workspace_dst=""):
     # If fedml format entry point is specified, inject the source code, e.g., main.py (FedMLPredictor inside)
+    volumes.append(src_code_dir)
+    dst_mount_dir = dst_model_serving_dir
+
+    if usr_customized_workspace_dst != "" and relative_entry_fedml_format == "":
+        # We only allow user to indicate the workspace mount rule when they are using the custom image
+        dst_mount_dir = usr_customized_workspace_dst
+
+    binds[src_code_dir] = {
+        "bind": dst_mount_dir,
+        "mode": "rw"
+    }
+
+    logging.info(f"Mounting the source code to the container..., target: {dst_mount_dir}")
+
     if relative_entry_fedml_format != "":
-        logging.info("Using FedML format entry point, mounting the source code...")
-        volumes.append(src_code_dir)
-        binds[src_code_dir] = {
-            "bind": dst_model_serving_dir,
-            "mode": "rw"
-        }
         environment["MAIN_ENTRY"] = relative_entry_fedml_format
-        return  # The reason we return here is that we don't need to mount the source code again
-
-    # If customized volume mount rule is specified, just follow the mount rule
-    """
-    e.g.,
-    volumes:
-      - workspace_path: "./model_repository"
-        mount_path: "/repo_inside_container"
-    """
-    mount_list = []
-    if not isinstance(customized_volumes_mount_rule, list):
-        if not isinstance(customized_volumes_mount_rule, dict):
-            logging.warning("customized_volumes_mount_rule is not a list or a dictionary, "
-                            "skip mounting it to the container")
-            return
-
-        # transform the dict to list
-        for k, v in customized_volumes_mount_rule.items():
-            mount_list.append({ClientConstants.CUSTOMIZED_VOLUMES_PATH_FROM_WORKSPACE_KEY: k,
-                               ClientConstants.CUSTOMIZED_VOLUMES_PATH_FROM_CONTAINER_KEY: v})
-    else:
-        mount_list = customized_volumes_mount_rule if customized_volumes_mount_rule is not None else []
-
-    for mount in mount_list:
-        workspace_relative_path = mount[ClientConstants.CUSTOMIZED_VOLUMES_PATH_FROM_WORKSPACE_KEY]
-        mount_path = mount[ClientConstants.CUSTOMIZED_VOLUMES_PATH_FROM_CONTAINER_KEY]
-
-        workspace_path = os.path.join(host_workspace_root, workspace_relative_path)
-        if os.path.exists(workspace_path):
-            volumes.append(workspace_path)
-            binds[workspace_path] = {
-                "bind": mount_path,
-                "mode": "rw"
-            }
-        else:
-            logging.warning(f"{workspace_path} does not exist, skip mounting it to the container")
 
 
 def handle_container_service_app(config, model_storage_local_path):
     # Bootstrap, job and entrypoint related
-    dst_model_serving_dir = "/home/fedml/models_serving"
+    dst_model_serving_dir = config.get(ClientConstants.CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY,
+                                       "/home/fedml/models_serving")
     bootstrap_cmds_str_frm_yaml = config.get('bootstrap', "")
     job_cmds_str_frm_yaml = config.get('job', "")
 
@@ -599,16 +572,21 @@ def handle_container_service_app(config, model_storage_local_path):
     if bootstrap_cmds_str_frm_yaml != "" or job_cmds_str_frm_yaml != "":
         src_bootstrap_file_path = os.path.join(model_storage_local_path, auto_gen_bootstrap_file_name)
         with open(src_bootstrap_file_path, 'w') as f:
-            f.write("cd /home/fedml/models_serving/\n")
+            f.write(f"cd {dst_model_serving_dir}/\n")
             f.write(bootstrap_cmds_str_frm_yaml)
             f.write("\n")
-            f.write("cd /home/fedml/models_serving/\n")
+            f.write(f"cd {dst_model_serving_dir}/\n")
             f.write(job_cmds_str_frm_yaml)
     else:
         src_bootstrap_file_path = ""
 
     if src_bootstrap_file_path != "":
         dst_bootstrap_dir = os.path.join(dst_model_serving_dir, auto_gen_bootstrap_file_name)
+
+        # User could specify "workspace_mount_path", override the default path
+        if ClientConstants.CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY in config:
+            dst_bootstrap_dir = os.path.join(config[ClientConstants.CUSTOMIZED_WORKSPACE_MOUNT_PATH_KEY],
+                                             auto_gen_bootstrap_file_name)
     else:
         dst_bootstrap_dir = ""
 
@@ -618,6 +596,42 @@ def handle_container_service_app(config, model_storage_local_path):
     # User indicate either fedml format python main entry filename or entry command
     expose_subdomains = config.get(ClientConstants.EXPOSE_SUBDOMAINS_KEY, False)
     customized_image_entry_cmd = config.get('container_run_command', None)  # Could be str or list
+
+    if customized_image_entry_cmd is not None and relative_entry_fedml_format != "":
+        logging.warning("Both entry_point and container_run_command are specified, "
+                        "entry_point will be ignored")
+        relative_entry_fedml_format = ""
+
+    # if usr indicates both the customized_image_entry_cmd and bootstrap, we will inject the bootstrap into the entry
+    # Using /bin/bash to run the bootstrap script, there are three legal formats for the customized_image_entry_cmd
+    # However, only the third one is supported in this function
+    """
+    1. CMD ["executable","param1","param2"] (exec form)
+    e.g. 
+        CMD ["python3", "/app/app.py", "--port", "8080"]
+    
+    2. CMD ["param1","param2"] (exec form, as default parameters to ENTRYPOINT)
+    e.g.
+        ENTRYPOINT ["nginx"]
+        CMD ["-g", "daemon off;"]
+        
+    3. CMD command param1 param2
+    e.g.
+        echo "Container is running" && curl http://example.com
+    """
+    if dst_bootstrap_dir != "" and customized_image_entry_cmd is not None:
+        if isinstance(customized_image_entry_cmd, str):
+            if customized_image_entry_cmd == "":
+                # We do not know the original CMD in the Dockerfile and do not want to overwrite it
+                pass
+            else:
+                # TODO(Raphael): Try to fix the compatibility issue with the first two formats and
+                #  also the restriction of /bin/bash
+                customized_image_entry_cmd = \
+                    f"/bin/bash -c '/bin/bash {dst_bootstrap_dir} && {customized_image_entry_cmd}'"
+        else:
+            logging.warning("The customized_image_entry_cmd is not a string, skip injecting the bootstrap script")
+
     customized_readiness_check = config.get('readiness_probe', ClientConstants.READINESS_PROBE_DEFAULT)
     customized_liveliness_check = config.get('liveness_probe', ClientConstants.LIVENESS_PROBE_DEFAULT)
     customized_uri = config.get(ClientConstants.CUSTOMIZED_SERVICE_KEY, "")
