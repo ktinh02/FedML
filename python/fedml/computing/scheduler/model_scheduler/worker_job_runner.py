@@ -289,6 +289,8 @@ class FedMLDeployWorkerJobRunner(FedMLBaseSlaveJobRunner, ABC):
                             connectivity=connectivity
                         )
 
+                    # Insert result to worker's db
+                    FedMLModelDatabase.get_instance().set_database_base_dir(ClientConstants.get_database_dir())
                     FedMLModelDatabase.get_instance().set_deployment_result(
                         run_id, end_point_name, model_name, model_version, self.edge_id,
                         json.dumps(result_payload), replica_no=rank + 1)

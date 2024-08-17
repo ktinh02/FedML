@@ -3,7 +3,10 @@ import os
 import fedml
 from fedml.computing.scheduler.scheduler_core.general_constants import MarketplaceType
 from fedml.computing.scheduler.slave.slave_agent import FedMLLaunchSlaveAgent
-
+from fedml.computing.scheduler.model_scheduler.device_server_constants import ServerConstants
+from fedml.computing.scheduler.model_scheduler.device_client_constants import ClientConstants
+from fedml.computing.scheduler.model_scheduler.device_server_constants import ServerConstants as DeviceServerConstants
+from fedml.computing.scheduler.model_scheduler.device_client_constants import ClientConstants as DeviceClientConstants
 
 def logout():
     FedMLLaunchSlaveAgent.logout()
@@ -28,6 +31,15 @@ if __name__ == "__main__":
     parser.add_argument("--marketplace_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
     parser.add_argument("--price_per_hour", "-pph", type=str, default="0.0")
 
+    # For master gateway port and worker proxy port, the expected way of setting is through fedml login cli
+    # or api, here is for Local Debugging Mode.
+    parser.add_argument("--master_gateway_port", "-mgp", type=int,
+                        default=ServerConstants.MODEL_INFERENCE_DEFAULT_PORT)
+    parser.add_argument("--worker_proxy_port", "-wpp", type=int,
+                        default=ClientConstants.LOCAL_CLIENT_API_PORT)
+    parser.add_argument("--worker_connection_type", "-wct", type=str,
+                        default=ClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT)
+
     args = parser.parse_args()
     args.user = args.user
     if args.api_key == "":
@@ -39,6 +51,11 @@ if __name__ == "__main__":
         fedml.set_local_on_premise_platform_port(args.local_on_premise_platform_port)
 
     fedml.set_env_version(args.version)
+
+    fedml.set_env_kv(DeviceServerConstants.ENV_MASTER_INFERENCE_PORT_KEY, str(args.master_gateway_port))
+    fedml.set_env_kv(DeviceClientConstants.ENV_CLIENT_PROXY_PORT_KEY, str(args.worker_proxy_port))
+    fedml.set_env_kv(DeviceClientConstants.ENV_CONNECTION_TYPE_KEY, args.worker_connection_type)
+
     slave_agent = FedMLLaunchSlaveAgent()
     if args.type == 'login':
         slave_agent.login(userid=args.api_key, api_key=args.api_key, device_id=args.device_id,

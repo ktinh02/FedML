@@ -572,7 +572,7 @@ class JobMonitor(Singleton):
                         if model_name is None:
                             continue
 
-                        # Get replicas deployment result inside this device
+                        # Get replicas deployment result inside this worker
                         deployment_result_list = FedMLModelDatabase.get_instance().get_deployment_result_with_device_id(
                             job.job_id, endpoint_name, model_name, job.edge_id)
 

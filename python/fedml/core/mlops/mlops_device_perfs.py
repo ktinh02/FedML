@@ -42,7 +42,7 @@ class MLOpsDevicePerfStats(object):
         self.monitor_replica_num_process = None
         self.monitor_replica_perf_process = None
         self.job_total_monitor_process = None
-        self.enable_job_total_monitor = False   # TODO(Raphael): Enable the healthiness check by this job total monitor
+        self.enable_job_total_monitor = True
         self.args = None
         self.device_id = None
         self.run_id = None
@@ -82,6 +82,7 @@ class MLOpsDevicePerfStats(object):
         self.device_realtime_stats_process.start()
 
         if self.enable_job_total_monitor:
+            # Detailed monitoring for client and server
             self.job_total_monitor_process = multiprocessing.Process(
                 target=perf_stats.report_device_realtime_stats_entry,
                 args=(self.device_realtime_stats_event, ROLE_DEVICE_JOB_TOTAL_MONITOR, self.is_client))
@@ -197,9 +198,10 @@ class MLOpsDevicePerfStats(object):
                     job_monitor_obj.autoscaler_reconcile_after_interval()
                 elif role == ROLE_DEVICE_JOB_TOTAL_MONITOR:
                     if is_client:
+                        JobMonitor.get_instance().monitor_slave_endpoint_status()   # Detailed probe
+                        JobMonitor.get_instance().monitor_master_endpoint_status()  # Detailed probe
+
                         JobMonitor.get_instance().monitor_slave_run_process_status()
-                        JobMonitor.get_instance().monitor_slave_endpoint_status()
-                        JobMonitor.get_instance().monitor_master_endpoint_status()
                         JobMonitor.get_instance().monitor_endpoint_logs()
                         JobMonitor.get_instance().monitor_replicas_number()
                         JobMonitor.get_instance().monitor_replicas_perf(self.edge_id, mqtt_mgr=mqtt_mgr)
