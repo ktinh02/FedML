@@ -49,7 +49,7 @@ class FedMLAccountManager(Singleton):
         return FedMLAccountManager()
 
     def login(self, user_id, api_key="", device_id=None, os_name=None, role=None, runner_cmd=None, marketplace_type=None,
-              price_per_hour=None):
+              price_per_hour=None, name=""):
         # Build the agent args
         self.build_agent_args(
             user_id, api_key=api_key, device_id=device_id, os_name=os_name, role=role, runner_cmd=runner_cmd
@@ -96,7 +96,8 @@ class FedMLAccountManager(Singleton):
                 edge_id, user_name, extra_url, general_edge_id = FedMLAccountManager.bind_account_and_device_id(
                     url=service_config["ml_ops_config"]["EDGE_BINDING_URL"], account_id=self.agent_args.account_id,
                     device_id=self.agent_args.unique_device_id, os_name=self.agent_args.os_name,
-                    api_key=api_key, role=role, marketplace_type=marketplace_type, price_per_hour=price_per_hour
+                    api_key=api_key, role=role, marketplace_type=marketplace_type, price_per_hour=price_per_hour,
+                    name=name
                 )
                 if edge_id > 0:
                     break
@@ -310,7 +311,7 @@ class FedMLAccountManager(Singleton):
     @staticmethod
     def bind_account_and_device_id(
             url, account_id, device_id, marketplace_type, price_per_hour, os_name,api_key="",
-            role=ROLE_EDGE_SERVER):
+            role=ROLE_EDGE_SERVER, name=""):
         ip = requests.get('https://checkip.amazonaws.com').text.strip()
         fedml_ver, exec_path, os_ver, cpu_info, python_ver, torch_ver, mpi_installed, \
             cpu_usage, available_mem, total_mem, gpu_info, gpu_available_mem, gpu_total_mem, \
@@ -340,6 +341,8 @@ class FedMLAccountManager(Singleton):
         if role == FedMLAccountManager.ROLE_GPU_PROVIDER:
             json_params["marketplaceType"] = MarketplaceType.from_str(marketplace_type).value
             json_params["providerPricePerHour"] = float(price_per_hour)
+            if name:
+                json_params["name"] = name
 
         if gpu_count > 0:
             if gpu_total_mem is not None:

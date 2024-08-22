@@ -96,11 +96,18 @@ from fedml.computing.scheduler.scheduler_core.general_constants import Marketpla
          "calculation. Default is 0.0."
          "Optionally, you can also set this price later through supplier page on the FEDML® Nexus AI Platform."
 )
+@click.option(
+    "--name",
+    "-n",
+    type=str,
+    default="",
+    help="Name of the node.",
+)
 def fedml_login(
         api_key, version, compute_node, server, provider, deploy_worker_num,
         local_on_premise_platform, local_on_premise_platform_port,
         master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type, marketplace_type,
-        price_per_hour
+        price_per_hour, name
 ):
     fedml.set_env_version(version)
     fedml.set_local_on_premise_platform_host(local_on_premise_platform)

@@ -25,7 +25,7 @@ class FedMLBaseSlaveAgent(ABC):
     def login(
             self, userid, api_key=None, device_id=None,
             os_name=None, need_to_check_gpu=False, role=None,
-            marketplace_type=None, price_per_hour=None
+            marketplace_type=None, price_per_hour=None, name=""
     ):
         # Preprocess the login args
         if need_to_check_gpu:
@@ -40,7 +40,7 @@ class FedMLBaseSlaveAgent(ABC):
         login_result = FedMLAccountManager.get_instance().login(
             userid, api_key=api_key, device_id=device_id,
             os_name=os_name, role=role, marketplace_type=marketplace_type,
-            price_per_hour=price_per_hour
+            price_per_hour=price_per_hour, name=name
         )
         if login_result is not None:
             self.agent_args = login_result
