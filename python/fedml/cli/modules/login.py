@@ -129,7 +129,7 @@ def fedml_login(
         pass
     os.environ["FEDML_MODEL_WORKER_NUM"] = str(deploy_worker_num)
     fedml.api.login(api_key, compute_node, server, provider, master_inference_gateway_port,
-                    worker_inference_proxy_port, worker_connection_type, marketplace_type, price_per_hour)
+                    worker_inference_proxy_port, worker_connection_type, marketplace_type, price_per_hour, name)
 
 
 def __validate_mpt_pph(marketplace_type, price_per_hour):
