@@ -52,9 +52,13 @@ if __name__ == "__main__":
 
     fedml.set_env_version(args.version)
 
-    fedml.set_env_kv(DeviceServerConstants.ENV_MASTER_INFERENCE_PORT_KEY, str(args.master_gateway_port))
-    fedml.set_env_kv(DeviceClientConstants.ENV_CLIENT_PROXY_PORT_KEY, str(args.worker_proxy_port))
-    fedml.set_env_kv(DeviceClientConstants.ENV_CONNECTION_TYPE_KEY, args.worker_connection_type)
+    fedml.load_env()
+    if os.environ.get(DeviceServerConstants.ENV_MASTER_INFERENCE_PORT_KEY) is None:
+        fedml.set_env_kv(DeviceServerConstants.ENV_MASTER_INFERENCE_PORT_KEY, str(args.master_gateway_port))
+    if os.environ.get(DeviceClientConstants.ENV_CLIENT_PROXY_PORT_KEY) is None:
+        fedml.set_env_kv(DeviceClientConstants.ENV_CLIENT_PROXY_PORT_KEY, str(args.worker_proxy_port))
+    if os.environ.get(DeviceClientConstants.ENV_CONNECTION_TYPE_KEY) is None:
+        fedml.set_env_kv(DeviceClientConstants.ENV_CONNECTION_TYPE_KEY, args.worker_connection_type)
 
     slave_agent = FedMLLaunchSlaveAgent()
     if args.type == 'login':
