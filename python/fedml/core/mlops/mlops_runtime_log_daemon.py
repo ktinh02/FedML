@@ -17,8 +17,8 @@ from ...core.mlops.mlops_configs import MLOpsConfigs
 
 class MLOpsRuntimeLogProcessor:
     FED_LOG_LINE_NUMS_PER_UPLOADING = 1000
-    FED_LOG_UPLOAD_FREQUENCY = 3
-    FED_LOG_UPLOAD_S3_FREQUENCY = 30
+    FED_LOG_UPLOAD_FREQUENCY = 5         # Real time
+    FED_LOG_UPLOAD_S3_FREQUENCY = 300    # Backup
     FEDML_LOG_REPORTING_STATUS_FILE_NAME = "log_status"
     FEDML_RUN_LOG_STATUS_DIR = "run_log_status"
 
@@ -267,9 +267,9 @@ class MLOpsRuntimeLogProcessor:
             try:
                 time.sleep(MLOpsRuntimeLogProcessor.FED_LOG_UPLOAD_FREQUENCY)
 
-                self.log_upload(self.run_id, self.device_id)
+                self.log_upload(self.run_id, self.device_id)    # MQTT log upload
 
-                log_artifact_time_counter += MLOpsRuntimeLogProcessor.FED_LOG_UPLOAD_FREQUENCY
+                log_artifact_time_counter += MLOpsRuntimeLogProcessor.FED_LOG_UPLOAD_FREQUENCY  # Use S3 for backup
                 if log_artifact_time_counter >= MLOpsRuntimeLogProcessor.FED_LOG_UPLOAD_S3_FREQUENCY:
                     log_artifact_time_counter = 0
                     log_file_current_size = os.path.getsize(self.log_file_path) if os.path.exists(
