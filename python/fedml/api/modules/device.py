@@ -19,7 +19,7 @@ from fedml.computing.scheduler.scheduler_entry.resource_manager import FedMLReso
 
 
 def bind(
-        api_key, computing, server, supplier, marketplace_type, price_per_hour,
+        api_key, computing, server, supplier, marketplace_type, price_per_hour, name,
         master_inference_gateway_port=DeviceServerConstants.MODEL_INFERENCE_DEFAULT_PORT,
         worker_inference_proxy_port=DeviceClientConstants.LOCAL_CLIENT_API_PORT,
         worker_connection_type=DeviceClientConstants.WORKER_CONNECTIVITY_TYPE_DEFAULT):
@@ -48,12 +48,12 @@ def bind(
         userid, computing, server,
         api_key, role, runner_cmd, device_id, os_name,
         docker, master_inference_gateway_port, worker_inference_proxy_port, worker_connection_type, marketplace_type,
-        price_per_hour)
+        price_per_hour, name)
 
 
 def _bind(
         userid, computing, server, api_key, role, runner_cmd, device_id, os_name, docker, master_inference_gateway_port,
-        worker_inference_proxy_port, worker_connection_type, marketplace_type, price_per_hour):
+        worker_inference_proxy_port, worker_connection_type, marketplace_type, price_per_hour, name):
     fedml.load_env()
     if os.getenv(ModuleConstants.ENV_FEDML_INFER_HOST) is None:
         fedml.set_env_kv(ModuleConstants.ENV_FEDML_INFER_HOST, SchedulerConstants.REDIS_INFER_HOST)
@@ -181,7 +181,9 @@ def _bind(
                 "-mpt",
                 marketplace_type,
                 "-pph",
-                str(price_per_hour)
+                str(price_per_hour),
+                "-n",
+                name
             ]
         ).pid
         sys_utils.save_login_process(ClientConstants.LOCAL_HOME_RUNNER_DIR_NAME,

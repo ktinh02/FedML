@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_on_premise_platform_port", "-lpp", type=int, default=80)
     parser.add_argument("--marketplace_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
     parser.add_argument("--price_per_hour", "-pph", type=str, default="0.0")
+    parser.add_argument("--name", "-n", type=str, default="")
 
     args = parser.parse_args()
     args.user = args.user
@@ -88,7 +89,9 @@ if __name__ == "__main__":
                     "-mpt",
                     args.marketplace_type,
                     "-pph",
-                    args.price_per_hour
+                    args.price_per_hour,
+                    "-n",
+                    args.name
                 ]
             )
             ret_code, exec_out, exec_err = ClientConstants.get_console_sys_out_pipe_err_results(login_pid)
@@ -98,7 +101,7 @@ if __name__ == "__main__":
             run_login_cmd = f"nohup {get_python_program()} -W ignore {login_cmd} -t login -u {args.user} " \
                             f"-v {args.version} -r {args.role} -id {args.device_id} " \
                             f"-k {args.api_key} -ngc {str(args.no_gpu_check)} -mpt {args.marketplace_type} " \
-                            f"-pph {args.price_per_hour} > {login_logs} 2>&1 &"
+                            f"-pph {args.price_per_hour} -n {args.name} > {login_logs} 2>&1 &"
             if args.os_name != "":
                 run_login_cmd += f" -os {args.os_name}"
             os.system(run_login_cmd)

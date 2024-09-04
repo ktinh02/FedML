@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_on_premise_platform_port", "-lpp", type=int, default=80)
     parser.add_argument("--marketplace_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
     parser.add_argument("--price_per_hour", "-pph", type=str, default="0.0")
+    parser.add_argument("--name", "-n", type=str, default="")
 
     args = parser.parse_args()
     args.user = args.user
@@ -43,6 +44,6 @@ if __name__ == "__main__":
     if args.type == 'login':
         slave_agent.login(userid=args.api_key, api_key=args.api_key, device_id=args.device_id,
                           os_name=args.os_name, role=args.role, marketplace_type=args.marketplace_type,
-                          price_per_hour=args.price_per_hour)
+                          price_per_hour=args.price_per_hour, name=args.name)
     else:
         FedMLLaunchSlaveAgent.logout()
