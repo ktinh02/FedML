@@ -341,8 +341,8 @@ class FedMLAccountManager(Singleton):
         if role == FedMLAccountManager.ROLE_GPU_PROVIDER:
             json_params["marketplaceType"] = MarketplaceType.from_str(marketplace_type).value
             json_params["providerPricePerHour"] = float(price_per_hour)
-            if name:
-                json_params["name"] = name
+            json_params["name"] = name
+            logging.info(f"[DEBUG] marketplaceType: {marketplace_type}, price_per_hour: {price_per_hour}, name: {name}")
 
         if gpu_count > 0:
             if gpu_total_mem is not None:
