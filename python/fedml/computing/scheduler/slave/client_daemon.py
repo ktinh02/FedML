@@ -6,8 +6,7 @@ import logging
 
 import fedml
 from fedml.computing.scheduler.comm_utils.sys_utils import cleanup_all_fedml_client_api_processes, \
-    cleanup_all_fedml_client_learning_processes, cleanup_all_fedml_client_login_processes, get_python_program, \
-    daemon_ota_upgrade
+    cleanup_all_fedml_client_learning_processes, cleanup_all_fedml_client_login_processes, get_python_program
 from fedml.computing.scheduler.scheduler_core.general_constants import MarketplaceType
 from fedml.computing.scheduler.slave.client_constants import ClientConstants
 from fedml.computing.scheduler.comm_utils.run_process_utils import RunProcessUtils

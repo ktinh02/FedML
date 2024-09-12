@@ -183,7 +183,7 @@ def _bind(
                 "-pph",
                 str(price_per_hour),
                 "-n",
-                name
+                str(name)
             ]
         ).pid
         sys_utils.save_login_process(ClientConstants.LOCAL_HOME_RUNNER_DIR_NAME,
