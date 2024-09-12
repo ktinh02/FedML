@@ -6,8 +6,7 @@ import logging
 
 import fedml
 from fedml.computing.scheduler.comm_utils.sys_utils import cleanup_all_fedml_client_api_processes, \
-    cleanup_all_fedml_client_learning_processes, cleanup_all_fedml_client_login_processes, get_python_program, \
-    daemon_ota_upgrade
+    cleanup_all_fedml_client_learning_processes, cleanup_all_fedml_client_login_processes, get_python_program
 from fedml.computing.scheduler.scheduler_core.general_constants import MarketplaceType
 from fedml.computing.scheduler.slave.client_constants import ClientConstants
 from fedml.computing.scheduler.comm_utils.run_process_utils import RunProcessUtils
@@ -27,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_on_premise_platform_port", "-lpp", type=int, default=80)
     parser.add_argument("--marketplace_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
     parser.add_argument("--price_per_hour", "-pph", type=str, default="0.0")
-    parser.add_argument("--name", "-n", type=str, default="")
+    parser.add_argument("--name", "-n", type=str, nargs='?', default="")
 
     args = parser.parse_args()
     args.user = args.user
