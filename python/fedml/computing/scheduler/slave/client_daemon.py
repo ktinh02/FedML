@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_on_premise_platform_port", "-lpp", type=int, default=80)
     parser.add_argument("--marketplace_type", "-mpt", type=str, default=MarketplaceType.SECURE.name)
     parser.add_argument("--price_per_hour", "-pph", type=str, default="0.0")
-    parser.add_argument("--name", "-n", type=str, required=True)
+    parser.add_argument("--name", "-n", type=str, nargs='?', default="")
 
     args = parser.parse_args()
     args.user = args.user
