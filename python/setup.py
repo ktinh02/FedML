@@ -126,7 +126,7 @@ requirements_extra_nlp = [
 
 setup(
     name="fedml",
-    version="0.8.50",
+    version="0.8.51b30",
     author="FedML Team",
     author_email="ch@fedml.ai",
     description="A research and production integrated edge-cloud library for "
@@ -173,6 +173,8 @@ setup(
                 "fedml/core/mlops/ssl/open-test.fedml.ai_bundle.crt",
                 "fedml/core/mlops/ssl/open-release.fedml.ai_bundle.crt",
                 "fedml/core/mlops/ssl/open-root-ca.crt",
+                "fedml/core/mlops/ssl/open.chainopera.ai.local.crt",
+                "fedml/core/mlops/ssl/open.chainopera.ai.local.rootca.crt",
             ],
         )
     ],
