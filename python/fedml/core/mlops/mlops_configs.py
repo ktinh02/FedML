@@ -8,6 +8,7 @@ import cachetools.func
 
 import fedml
 from fedml.core.mlops.mlops_utils import MLOpsUtils
+from urllib.parse import urlparse
 
 
 class Configs(Enum):
@@ -49,9 +50,15 @@ class MLOpsConfigs(object):
         cert_path = None
         if str(url).startswith("https://"):
             cur_source_dir = os.path.dirname(__file__)
-            cert_path = os.path.join(
-                cur_source_dir, "ssl", "open-" + fedml.get_env_version() + ".fedml.ai_bundle.crt"
-            )
+            version = fedml.get_env_version()
+            if version == "local":
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", f"{urlparse(url).hostname}.{version}.crt"
+                )
+            else:
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", "open-" + fedml.get_env_version() + ".fedml.ai_bundle.crt"
+                )
 
         return url, cert_path
 
@@ -88,17 +95,30 @@ class MLOpsConfigs(object):
         cert_path = None
         if str(url).startswith("https://"):
             cur_source_dir = os.path.dirname(__file__)
-            cert_path = os.path.join(
-                cur_source_dir, "ssl", "open-" + version + ".fedml.ai_bundle.crt"
-            )
+            if version == "local":
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", f"{urlparse(url).hostname}.{version}.crt"
+                )
+            else:
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", "open-" + version + ".fedml.ai_bundle.crt"
+                )
+
         return cert_path
 
     @staticmethod
     def get_root_ca_path():
         cur_source_dir = os.path.dirname(__file__)
-        cert_path = os.path.join(
-            cur_source_dir, "ssl", "open-root-ca.crt"
-        )
+        version = fedml.get_env_version()
+        if version == "local":
+            url = fedml._get_backend_service()
+            cert_path = os.path.join(
+                cur_source_dir, "ssl", f"{urlparse(url).hostname}.{version}.rootca.crt"
+            )
+        else:
+            cert_path = os.path.join(
+                cur_source_dir, "ssl", "open-root-ca.crt"
+            )
         return cert_path
 
     @staticmethod
