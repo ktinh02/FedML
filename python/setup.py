@@ -173,6 +173,8 @@ setup(
                 "fedml/core/mlops/ssl/open-test.fedml.ai_bundle.crt",
                 "fedml/core/mlops/ssl/open-release.fedml.ai_bundle.crt",
                 "fedml/core/mlops/ssl/open-root-ca.crt",
+                "fedml/core/mlops/ssl/open.chainopera.ai.local.crt",
+                "fedml/core/mlops/ssl/open.chainopera.ai.local.rootca.crt",
             ],
         )
     ],
