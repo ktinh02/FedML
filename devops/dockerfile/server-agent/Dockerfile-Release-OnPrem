@@ -1,0 +1,15 @@
+ARG VERSION=local
+ARG IS_BUILDING_GPU_IMAGE=0
+ARG BASE_IMAGE=docker.io/fedml/fedml-server-agent:release
+FROM ${BASE_IMAGE}
+
+WORKDIR /fedml
+
+ENV MODE=normal FEDML_VERSION=${VERSION} ACCOUNT_ID=0 SERVER_AGENT_ID=0 \
+    AWS_IAM_ACCESS_ID=0 \
+    AWS_IAM_ACCESS_KEY=0 \
+    AWS_REGION=0 \
+    ON_PREM_LP="open.tensoropera.ai" \
+    ON_PREM_LPP=443
+
+CMD bash ./start-redis.sh; ./set-aws-credentials.sh ${AWS_IAM_ACCESS_ID} ${AWS_IAM_ACCESS_KEY} ${AWS_REGION};python3 ./fedml-pip/fedml/computing/scheduler/master/server_daemon.py -t login -u ${ACCOUNT_ID} -k ${ACCOUNT_ID} -v ${FEDML_VERSION} -r cloud_agent -lp ${ON_PREM_LP} -lpp ${ON_PREM_LPP} -id ${SERVER_AGENT_ID}; bash ./runner.sh
