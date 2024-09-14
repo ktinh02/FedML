@@ -4,9 +4,11 @@ from enum import Enum
 
 import certifi
 import requests
+import cachetools.func
 
 import fedml
 from fedml.core.mlops.mlops_utils import MLOpsUtils
+from urllib.parse import urlparse
 
 
 class Configs(Enum):
@@ -41,15 +43,22 @@ class MLOpsConfigs(object):
         pass
 
     @staticmethod
+    @cachetools.func.ttl_cache(ttl=600)
     def get_request_params():
         url = fedml._get_backend_service()
         url = f"{url}/fedmlOpsServer/configs/fetch"
         cert_path = None
         if str(url).startswith("https://"):
             cur_source_dir = os.path.dirname(__file__)
-            cert_path = os.path.join(
-                cur_source_dir, "ssl", "open-" + fedml.get_env_version() + ".fedml.ai_bundle.crt"
-            )
+            version = fedml.get_env_version()
+            if version == "local":
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", f"{urlparse(url).hostname}.{version}.crt"
+                )
+            else:
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", "open-" + fedml.get_env_version() + ".fedml.ai_bundle.crt"
+                )
 
         return url, cert_path
 
@@ -86,17 +95,30 @@ class MLOpsConfigs(object):
         cert_path = None
         if str(url).startswith("https://"):
             cur_source_dir = os.path.dirname(__file__)
-            cert_path = os.path.join(
-                cur_source_dir, "ssl", "open-" + version + ".fedml.ai_bundle.crt"
-            )
+            if version == "local":
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", f"{urlparse(url).hostname}.{version}.crt"
+                )
+            else:
+                cert_path = os.path.join(
+                    cur_source_dir, "ssl", "open-" + version + ".fedml.ai_bundle.crt"
+                )
+
         return cert_path
 
     @staticmethod
     def get_root_ca_path():
         cur_source_dir = os.path.dirname(__file__)
-        cert_path = os.path.join(
-            cur_source_dir, "ssl", "open-root-ca.crt"
-        )
+        version = fedml.get_env_version()
+        if version == "local":
+            url = fedml._get_backend_service()
+            cert_path = os.path.join(
+                cur_source_dir, "ssl", f"{urlparse(url).hostname}.{version}.rootca.crt"
+            )
+        else:
+            cert_path = os.path.join(
+                cur_source_dir, "ssl", "open-root-ca.crt"
+            )
         return cert_path
 
     @staticmethod
@@ -151,6 +173,11 @@ class MLOpsConfigs(object):
                 fetched_configs[Configs.S3_CONFIG],
                 fetched_configs[Configs.ML_OPS_CONFIG],
                 fetched_configs[Configs.DOCKER_CONFIG])
+
+    @staticmethod
+    def fetch_mqtt_config():
+        fetched_config = MLOpsConfigs._fetch_configs({Configs.MQTT_CONFIG})
+        return fetched_config[Configs.MQTT_CONFIG]
 
 
 if __name__ == "__main__":

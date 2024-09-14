@@ -106,4 +106,3 @@ class RunStatus(Enum):
             if run_status.value == run_status_str:
                 return run_status
         return cls.UNDETERMINED
-

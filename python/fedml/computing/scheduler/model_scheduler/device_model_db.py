@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import platform
 import time
 
 from fedml.computing.scheduler.model_scheduler.device_server_constants import ServerConstants
@@ -9,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from fedml.core.common.singleton import Singleton
 from sqlalchemy.sql import text
+from typing import List, Dict
 
 Base = declarative_base()
 
@@ -41,9 +43,11 @@ class FedMLModelDatabase(Singleton):
         self.set_deployment_results_info(end_point_id, end_point_name, model_name, model_version,
                                          device_id, deployment_status=deployment_status, replica_no=replica_no)
 
-    def get_deployment_result_list(self, end_point_id, end_point_name, model_name, model_version=None):
+    def get_deployment_result_list(self, end_point_id, end_point_name, model_name, model_version=None) -> List[str]:
         """
-        query from sqlite db using e_id
+        Get the orm use get_deployment_results_info,
+        but (1) nested results with cache_device_id, cache_replica_no.
+        (2) return a list of json string, so that redis can store it.
         """
         result_list = self.get_deployment_results_info(end_point_id, end_point_name, model_name, model_version)
         ret_result_list = list()
@@ -54,6 +58,39 @@ class FedMLModelDatabase(Singleton):
             ret_result_list.append(json.dumps(result_dict))
         return ret_result_list
 
+    def get_all_deployment_results_list(self) -> List[Dict]:
+        """
+        Similar to _get_all_deployment_results_info,
+        but return a list of json string, so that redis can store it.
+
+        return a list of dict, for each item:
+        [
+            {
+                "end_point_id": "",
+                "end_point_name": "",
+                "model_name":"",
+                "replica_res": ""   # Json string
+            },
+        ]
+        value in the dict is a string that contains the deployment result.
+        """
+        flat_ep_list = self._get_all_deployment_results_info()
+        ret_result_list = list()
+        for result in flat_ep_list:
+            result_dict = {
+                "end_point_id": result.end_point_id,
+                "end_point_name": result.end_point_name,
+                "model_name": result.model_name,
+                "replica_info": json.dumps(
+                    {
+                        "cache_device_id": result.device_id,
+                        "cache_replica_no": int(result.replica_no),
+                        "result": result.deployment_result
+                    }
+                )
+            }
+            ret_result_list.append(result_dict)
+        return ret_result_list
 
     def get_deployment_status_list(self, end_point_id, end_point_name, model_name, model_version=None):
         result_list = self.get_deployment_results_info(end_point_id, end_point_name, model_name, model_version)
@@ -155,7 +192,8 @@ class FedMLModelDatabase(Singleton):
             end_point_id=f'{end_point_id}').delete()
         self.db_connection.commit()
 
-    def get_result_item_info(self, result_item):
+    @staticmethod
+    def get_result_item_info(result_item):
         result_item_json = json.loads(result_item)
         if isinstance(result_item_json, dict):
             result_item_json = json.loads(result_item)
@@ -168,7 +206,8 @@ class FedMLModelDatabase(Singleton):
             result_payload = result_item_json["result"]
         return device_id, replica_no, result_payload
 
-    def get_status_item_info(self, status_item):
+    @staticmethod
+    def get_status_item_info(status_item):
         status_item_json = json.loads(status_item)
         if isinstance(status_item_json, dict):
             status_item_json = json.loads(status_item)
@@ -261,7 +300,10 @@ class FedMLModelDatabase(Singleton):
             self.db_base_dir = ServerConstants.get_database_dir()
 
         job_db_path = os.path.join(self.db_base_dir, FedMLModelDatabase.MODEL_DEPLOYMENT_DB)
-        self.db_engine = create_engine('sqlite:////{}'.format(job_db_path), echo=False)
+        if platform.system() == "Windows":
+            self.db_engine = create_engine('sqlite:///{}'.format(job_db_path), echo=False)
+        else:
+            self.db_engine = create_engine('sqlite:////{}'.format(job_db_path), echo=False)
 
         db_session_class = sessionmaker(bind=self.db_engine)
         self.db_connection = db_session_class()
@@ -314,6 +356,11 @@ class FedMLModelDatabase(Singleton):
                             FedMLDeploymentResultInfoModel.end_point_name == f'{end_point_name}',
                             FedMLDeploymentResultInfoModel.model_name == f'{model_name}',
                             FedMLDeploymentResultInfoModel.model_version == f'{model_version}')).all()
+        return result_info
+
+    def _get_all_deployment_results_info(self):
+        self.open_job_db()
+        result_info = self.db_connection.query(FedMLDeploymentResultInfoModel).all()
         return result_info
 
     def set_deployment_results_info(self, end_point_id, end_point_name,
