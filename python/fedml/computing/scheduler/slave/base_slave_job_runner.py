@@ -251,6 +251,7 @@ class FedMLBaseSlaveJobRunner(FedMLSchedulerBaseJobRunner, ABC):
             agent_config=None, edge_id=edge_id
         )
         client_runner.start_request_json = request_json
+        client_runner.cuda_visible_gpu_ids_str = cuda_visible_gpu_ids_str
         run_id_str = str(run_id)
         self.run_process_event = multiprocessing.Event()
         client_runner.run_process_event = self.run_process_event
