@@ -1,0 +1,14 @@
+ARG VERSION=local
+ARG IS_BUILDING_GPU_IMAGE=0
+ARG BASE_IMAGE=docker.io/fedml/fedml-device-image:release
+FROM ${BASE_IMAGE}
+
+WORKDIR /fedml
+
+ENV MODE=normal FEDML_VERSION=${VERSION} ACCOUNT_ID=0 SERVER_DEVICE_ID=0 \
+    FEDML_PACKAGE_NAME=package FEDML_PACKAGE_URL=s3_url \
+    FEDML_RUNNER_CMD=3dsad \
+    ON_PREM_LP="open.tensoropera.ai" \
+    ON_PREM_LPP=443
+
+CMD bash ./start-redis.sh; python3 ./fedml-pip/fedml/computing/scheduler/master/server_daemon.py -t login -u ${ACCOUNT_ID} -v ${FEDML_VERSION} -r cloud_server -lp ${ON_PREM_LP} -lpp ${ON_PREM_LPP} -rc ${FEDML_RUNNER_CMD} -id ${SERVER_DEVICE_ID}; bash ./runner.sh
