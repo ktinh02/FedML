@@ -509,9 +509,10 @@ class FedMLBaseSlaveProtocolManager(FedMLSchedulerBaseProtocolManager, ABC):
             if run_process is not None:
                 if run_process.pid is not None:
                     RunProcessUtils.kill_process(run_process.pid)
-                    # Terminate the run docker container if exists
+                    # Check if docker client exists and then terminate containers.
                     if JobRunnerUtils.docker_client_exists():
                         try:
+                            # Terminate docker container.
                             docker_client = JobRunnerUtils.get_docker_client(DockerArgs())
                             container_name = JobRunnerUtils.get_run_container_name(run_id)
                             logging.info(f"Terminating the run docker container {container_name} if exists...")

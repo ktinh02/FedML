@@ -616,15 +616,17 @@ class FedMLSchedulerBaseJobRunner(ABC):
         if not (job_type == SchedulerConstants.JOB_TASK_TYPE_SERVE or
                 job_type == SchedulerConstants.JOB_TASK_TYPE_DEPLOY):
 
-            # Terminate the run docker container if exists
-            try:
-                container_name = JobRunnerUtils.get_run_container_name(run_id)
-                docker_client = JobRunnerUtils.get_docker_client(DockerArgs())
-                logging.info(f"Terminating the run docker container {container_name} if exists...")
-                JobRunnerUtils.remove_run_container_if_exists(container_name, docker_client)
-            except Exception as e:
-                logging.error(f"Exception {e} occurred when terminating docker container. "
-                              f"Traceback: {traceback.format_exc()}")
+            # Check if docker client exists and then terminate containers.
+            if JobRunnerUtils.docker_client_exists():
+                try:
+                    # Terminate docker container.
+                    docker_client = JobRunnerUtils.get_docker_client(DockerArgs())
+                    container_name = JobRunnerUtils.get_run_container_name(run_id)
+                    logging.info(f"Terminating the run docker container {container_name} if exists...")
+                    JobRunnerUtils.remove_run_container_if_exists(container_name, docker_client)
+                except Exception as e:
+                    logging.error(f"Exception {e} occurred when terminating docker container. "
+                                  f"Traceback: {traceback.format_exc()}")
 
             # Release the GPU ids and update the GPU availability in the persistent store
             JobRunnerUtils.get_instance().release_gpu_ids(run_id, edge_id)
