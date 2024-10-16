@@ -509,16 +509,16 @@ class FedMLBaseSlaveProtocolManager(FedMLSchedulerBaseProtocolManager, ABC):
             if run_process is not None:
                 if run_process.pid is not None:
                     RunProcessUtils.kill_process(run_process.pid)
-
                     # Terminate the run docker container if exists
-                    try:
-                        container_name = JobRunnerUtils.get_run_container_name(run_id)
-                        docker_client = JobRunnerUtils.get_docker_client(DockerArgs())
-                        logging.info(f"Terminating the run docker container {container_name} if exists...")
-                        JobRunnerUtils.remove_run_container_if_exists(container_name, docker_client)
-                    except Exception as e:
-                        logging.error(f"Error occurred when terminating docker container."
-                                      f"Exception: {e}, Traceback: {traceback.format_exc()}.")
+                    if JobRunnerUtils.docker_client_exists():
+                        try:
+                            docker_client = JobRunnerUtils.get_docker_client(DockerArgs())
+                            container_name = JobRunnerUtils.get_run_container_name(run_id)
+                            logging.info(f"Terminating the run docker container {container_name} if exists...")
+                            JobRunnerUtils.remove_run_container_if_exists(container_name, docker_client)
+                        except Exception as e:
+                            logging.error(f"Error occurred when terminating docker container."
+                                          f"Exception: {e}, Traceback: {traceback.format_exc()}.")
 
             # Stop log processor for current run
             MLOpsRuntimeLogDaemon.get_instance(self.args).stop_log_processor(run_id, edge_id)
