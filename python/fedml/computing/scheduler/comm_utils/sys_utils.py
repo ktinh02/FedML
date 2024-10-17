@@ -815,6 +815,7 @@ def daemon_ota_upgrade_with_version(in_version="release"):
 
 
 def run_cmd(command, show_local_console=False):
+    # Had to import ClientConstans here because otherwise it was raising circular import errors.
     from fedml.computing.scheduler.slave.client_constants import ClientConstants
     process = ClientConstants.exec_console_with_script(command, should_capture_stdout=True,
                                                        should_capture_stderr=True)
