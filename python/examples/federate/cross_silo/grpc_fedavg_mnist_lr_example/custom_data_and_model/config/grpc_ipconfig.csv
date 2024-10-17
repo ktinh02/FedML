@@ -1,2 +1,2 @@
-eid,rank,ip,port
+eid,rank,grpc_server_ip,grpc_server_port
 0,0,0.0.0.0,8890

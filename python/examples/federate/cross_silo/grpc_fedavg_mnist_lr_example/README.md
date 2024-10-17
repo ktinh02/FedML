@@ -11,7 +11,7 @@ comm_args:
 `grpc_ipconfig_path` specifies the path of the config for gRPC communication. Config file specifies an ip address for each process through with they can communicate with each other. The config file should have the following format:
 
 ```csv
-eid,rank,ip,port
+eid,rank,grpc_server_ip,grpc_server_port
 0,0,0.0.0.0,8890
 1,1,0.0.0.0,8899
 2,2,0.0.0.0,8898

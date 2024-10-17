@@ -11,7 +11,7 @@ lock = threading.Lock()
 from collections import namedtuple
 from concurrent import futures
 from fedml.core.mlops.mlops_profiler_event import MLOpsProfilerEvent
-from typing import List, TypedDict
+from typing import List
 
 from ...communication.base_com_manager import BaseCommunicationManager
 from ...communication.message import Message
