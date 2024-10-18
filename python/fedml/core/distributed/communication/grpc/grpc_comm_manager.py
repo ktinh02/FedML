@@ -104,7 +104,10 @@ class GRPCCommManager(BaseCommunicationManager):
     def send_message(self, msg: Message):
         # Register the sender rank, ip and port attribute on the message.
         msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_RANK, self.client_rank)
-        msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_IP, self.grpc_mappings[self.client_id].grpc_server_ip)
+        if self.grpc_mappings[self.client_id].ingress_ip:
+            msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_IP, self.grpc_mappings[self.client_id].ingress_ip)
+        else:
+            msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_IP, self.grpc_mappings[self.client_id].grpc_server_ip)
         msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_PORT, self.grpc_mappings[self.client_id].grpc_server_port)
         logging.info("sending msg = {}".format(msg.get_params_wout_model()))
         logging.info("pickle.dumps(msg) START")
