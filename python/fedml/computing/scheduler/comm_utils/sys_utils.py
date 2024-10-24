@@ -20,8 +20,6 @@ from packaging import version
 import sys
 import subprocess
 
-from fedml.computing.scheduler.slave.client_constants import ClientConstants
-
 FETAL_ERROR_START_CODE = 128
 
 SYS_ERR_CODE_MAP = {"0": "Successful exit without errors.",
@@ -817,6 +815,8 @@ def daemon_ota_upgrade_with_version(in_version="release"):
 
 
 def run_cmd(command, show_local_console=False):
+    # Had to import ClientConstans here because otherwise it was raising circular import errors.
+    from fedml.computing.scheduler.slave.client_constants import ClientConstants
     process = ClientConstants.exec_console_with_script(command, should_capture_stdout=True,
                                                        should_capture_stderr=True)
     ret_code, out, err = ClientConstants.get_console_pipe_out_err_results(process)

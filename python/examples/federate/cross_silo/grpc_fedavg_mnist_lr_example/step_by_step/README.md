@@ -9,10 +9,10 @@ The default ip of every groc server is set to `0.0.0.0`, and all grpc ports star
 > the aggregator (rank: 0). This record is mandatory. However, you can change the values of the `ip` and `port` 
 > attributes as you see fit, and more records for grpc server of the rest of clients. For instance:
 ```
-eid,rank,ip,port
+eid,rank,grpc_server_ip,grpc_server_port
 0,0,0.0.0.0,8890
-1,1,0.0.0.0,8899
-2,2,0.0.0.0,8898
+1,1,0.0.0.0,8891
+2,2,0.0.0.0,8892
 ```
 
 ## Start Script

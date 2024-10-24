@@ -575,6 +575,15 @@ class JobRunnerUtils(Singleton):
         return container_name
 
     @staticmethod
+    def docker_client_exists() -> bool:
+        try:
+            client = docker.from_env()
+            client.ping()
+            return True
+        except docker.errors.DockerException:
+            return False
+
+    @staticmethod
     def get_docker_client(docker_args: DockerArgs) -> DockerClient:
         try:
             client = docker.from_env()

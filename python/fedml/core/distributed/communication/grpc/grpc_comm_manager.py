@@ -8,6 +8,7 @@ import time
 
 lock = threading.Lock()
 
+from collections import namedtuple
 from concurrent import futures
 from fedml.core.mlops.mlops_profiler_event import MLOpsProfilerEvent
 from typing import List
@@ -20,6 +21,11 @@ from ..grpc import grpc_comm_manager_pb2_grpc, grpc_comm_manager_pb2
 
 # Check Service or serve?
 from ...communication.grpc.grpc_server import GRPCCOMMServicer
+
+
+GRPCMapping = \
+    namedtuple("GRPCMapping",
+               ["eid", "rank", "grpc_server_ip", "grpc_server_port", "ingress_ip"])
 
 
 class GRPCCommManager(BaseCommunicationManager):
@@ -39,10 +45,13 @@ class GRPCCommManager(BaseCommunicationManager):
         self._topic = topic
         self._observers: List[Observer] = []
         self.grpc_ipconfig_path = grpc_ipconfig_path
+        self.grpc_mappings = dict()
         self.client_rank = client_rank
         self.client_id = self.client_rank
         self.client_num = client_num
         self.args = args
+
+        self._init_grpc_mappings()  # Initialize self.grpc_mappings variable.
 
         if self.client_rank == 0:
             self.node_type = "server"
@@ -60,19 +69,19 @@ class GRPCCommManager(BaseCommunicationManager):
             options=self.opts,
         )
 
-        self.grpc_mappings = self._init_grpc_mappings()  # Load input mappings.
         if self.client_id not in self.grpc_mappings:
             # if no record exists for the current client id, then
             # default ip and rank to "0.0.0.0" and BASE + RANK.
-            self.ip = "0.0.0.0"
-            self.port = CommunicationConstants.GRPC_BASE_PORT + self.client_rank
-            self.grpc_mappings[self.client_id] = (self.client_rank, self.ip, self.port)
-        else:
-            _, self.ip, self.port = self.grpc_mappings[self.client_id]
+            self.grpc_mappings[self.client_id] = GRPCMapping(
+                eid=self.client_id,
+                rank=self.client_id,
+                grpc_server_ip="0.0.0.0",
+                grpc_server_port=CommunicationConstants.GRPC_BASE_PORT + self.client_rank,
+                ingress_ip=None)
 
         self.grpc_servicer = GRPCCOMMServicer(
-            self.ip,
-            self.port,
+            self.grpc_mappings[self.client_id].grpc_server_ip,
+            self.grpc_mappings[self.client_id].grpc_server_port,
             self.client_num,
             self.client_rank
         )
@@ -81,20 +90,25 @@ class GRPCCommManager(BaseCommunicationManager):
         )
         logging.info(os.getcwd())
 
-        self.grpc_server.add_insecure_port("{}:{}".format(self.ip, self.port))
+        grpc_insecure_ip_port = "{}:{}".format(self.grpc_mappings[self.client_id].grpc_server_ip,
+                                               self.grpc_mappings[self.client_id].grpc_server_port)
+        self.grpc_server.add_insecure_port(grpc_insecure_ip_port)
 
         self.grpc_server.start()
         # Wait for 100 milliseconds to make sure the grpc
         # server has started before proceeding.
         time.sleep(0.01)
         self.is_running = True
-        logging.info("grpc server started. Listening on port " + str(self.port))
+        logging.info("Started gRPC server: {}.".format(grpc_insecure_ip_port))
 
     def send_message(self, msg: Message):
         # Register the sender rank, ip and port attribute on the message.
         msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_RANK, self.client_rank)
-        msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_IP, self.ip)
-        msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_PORT, self.port)
+        if self.grpc_mappings[self.client_id].ingress_ip:
+            msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_IP, self.grpc_mappings[self.client_id].ingress_ip)
+        else:
+            msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_IP, self.grpc_mappings[self.client_id].grpc_server_ip)
+        msg.add_params(GRPCCommManager.MSG_ARG_KEY_SENDER_PORT, self.grpc_mappings[self.client_id].grpc_server_port)
         logging.info("sending msg = {}".format(msg.get_params_wout_model()))
         logging.info("pickle.dumps(msg) START")
         pickle_dump_start_time = time.time()
@@ -103,8 +117,13 @@ class GRPCCommManager(BaseCommunicationManager):
         logging.info("pickle.dumps(msg) END")
 
         receiver_id = msg.get_receiver_id()
-        receiver_rank, receiver_ip, receiver_port = self.grpc_mappings[int(receiver_id)]
-        channel_url = "{}:{}".format(receiver_ip, receiver_port)
+        receiver_grpc_mappings = self.grpc_mappings[int(receiver_id)]
+        if receiver_grpc_mappings.ingress_ip:
+            channel_url = "{}:{}".format(receiver_grpc_mappings.ingress_ip,
+                                         receiver_grpc_mappings.grpc_server_port)
+        else:
+            channel_url = "{}:{}".format(receiver_grpc_mappings.grpc_server_ip,
+                                         receiver_grpc_mappings.grpc_server_port)
 
         channel = grpc.insecure_channel(channel_url, options=self.opts)
         stub = grpc_comm_manager_pb2_grpc.gRPCCommManagerStub(channel)
@@ -155,7 +174,12 @@ class GRPCCommManager(BaseCommunicationManager):
                     sender_rank = int(msg.get_params()[GRPCCommManager.MSG_ARG_KEY_SENDER_RANK])
                     sender_ip = str(msg.get_params()[GRPCCommManager.MSG_ARG_KEY_SENDER_IP])
                     sender_port = int(msg.get_params()[GRPCCommManager.MSG_ARG_KEY_SENDER_PORT])
-                    self.grpc_mappings[sender_id] = (sender_rank, sender_ip, sender_port)
+                    self.grpc_mappings[sender_id] = GRPCMapping(
+                        eid=sender_id,
+                        rank=sender_rank,
+                        grpc_server_ip=sender_ip,
+                        grpc_server_port=sender_port,
+                        ingress_ip=sender_ip)
 
                 for observer in self._observers:
                     _message_handler_start_time = time.time()
@@ -186,10 +210,19 @@ class GRPCCommManager(BaseCommunicationManager):
             observer.receive_message(msg_type, msg_params)
 
     def _init_grpc_mappings(self):
-        mappings = dict()
-        csv_reader = csv.reader(open(self.grpc_ipconfig_path, "r"))
-        next(csv_reader)  # skip header line
-        for row in csv_reader:
-            eid, rank, ip, port = row
-            mappings[int(eid)] = (int(rank), str(ip), int(port))
-        return mappings
+        csv_dict_reader = csv.DictReader(open(self.grpc_ipconfig_path, "r"))
+        data_dict = list(csv_dict_reader)
+        for row in data_dict:
+            eid = int(row["eid"])
+            rank = int(row["rank"])
+            grpc_server_ip = str(row["grpc_server_ip"])
+            grpc_server_port = int(row["grpc_server_port"])
+            ingress_ip = None
+            if "ingress_ip" in row:
+                ingress_ip = row["ingress_ip"]
+            self.grpc_mappings[int(eid)] = GRPCMapping(
+                eid=eid,
+                rank=rank,
+                grpc_server_ip=grpc_server_ip,
+                grpc_server_port=grpc_server_port,
+                ingress_ip=ingress_ip)
