@@ -511,7 +511,8 @@ def _get_mqtt_service():
 
 
 def set_local_on_premise_platform_host(local_on_premise_platform_host):
-    os.environ['FEDML_ENV_LOCAL_ON_PREMISE_PLATFORM_HOST'] = local_on_premise_platform_host
+    # Should Also update the .env file
+    set_env_kv("FEDML_ENV_LOCAL_ON_PREMISE_PLATFORM_HOST", local_on_premise_platform_host)
 
 
 def get_local_on_premise_platform_host():
@@ -519,7 +520,7 @@ def get_local_on_premise_platform_host():
 
 
 def set_local_on_premise_platform_port(local_on_premise_platform_port):
-    os.environ['FEDML_ENV_LOCAL_ON_PREMISE_PLATFORM_PORT'] = str(local_on_premise_platform_port)
+    set_env_kv("FEDML_ENV_LOCAL_ON_PREMISE_PLATFORM_PORT", str(local_on_premise_platform_port))
 
 
 def get_local_on_premise_platform_port():

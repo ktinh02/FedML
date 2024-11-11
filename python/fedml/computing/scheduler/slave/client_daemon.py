@@ -97,6 +97,7 @@ if __name__ == "__main__":
             time.sleep(3)
         else:
             login_logs = os.path.join(ClientConstants.get_log_file_dir(), "login.log")
+            # If we use this kind of command, we cannot penetrate the environment variables to the subprocess
             run_login_cmd = f"nohup {get_python_program()} -W ignore {login_cmd} -t login -u {args.user} " \
                             f"-v {args.version} -r {args.role} -id {args.device_id} " \
                             f"-k {args.api_key} -ngc {str(args.no_gpu_check)} -mpt {args.marketplace_type} " \
@@ -106,6 +107,9 @@ if __name__ == "__main__":
             os.system(run_login_cmd)
 
             login_pids = RunProcessUtils.get_pid_from_cmd_line(login_cmd)
+            if len(login_pids) == 0:
+                print(f"[Client] Cannot find login pid {login_pids}, check the log file {login_logs}")
+                retry_count += 1
             while len(login_pids) > 0:
                 with open(login_logs, "r") as f:
                     log_list = f.readlines()
