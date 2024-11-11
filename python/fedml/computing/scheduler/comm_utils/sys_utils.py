@@ -301,249 +301,303 @@ def save_login_process(runner_home_dir, runner_info_dir, edge_process_id):
 
 def cleanup_all_fedml_client_learning_processes():
     # Cleanup all fedml client learning processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            found_learning_process = False
-            found_client_process = False
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find("fedml_config.yaml") != -1:
-                    found_learning_process = True
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                found_learning_process = False
+                found_client_process = False
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find("fedml_config.yaml") != -1:
+                        found_learning_process = True
 
-                if str(cmd).find("client") != -1:
-                    found_client_process = True
+                    if str(cmd).find("client") != -1:
+                        found_client_process = True
 
-            if found_learning_process and found_client_process:
-                # click.echo("find client learning process at {}.".format(process.pid))
-                if platform.system() == 'Windows':
-                    os.system("taskkill /PID {} /T /F".format(process.pid))
-                else:
-                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-        except Exception as e:
-            pass
+                if found_learning_process and found_client_process:
+                    # click.echo("find client learning process at {}.".format(process.pid))
+                    if platform.system() == 'Windows':
+                        os.system("taskkill /PID {} /T /F".format(process.pid))
+                    else:
+                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the client learning process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the client learning process due to {e}.")
+        pass
 
 
 def cleanup_all_fedml_client_diagnosis_processes():
     # Cleanup all fedml client learning processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            found_client_diagnosis_process = False
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find("client_diagnosis") != -1:
-                    found_client_diagnosis_process = True
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                found_client_diagnosis_process = False
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find("client_diagnosis") != -1:
+                        found_client_diagnosis_process = True
 
-            if found_client_diagnosis_process:
-                # click.echo("find client diagnosis process at {}.".format(process.pid))
-                if platform.system() == 'Windows':
-                    os.system("taskkill /PID {} /T /F".format(process.pid))
-                else:
-                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-        except Exception as e:
-            pass
+                if found_client_diagnosis_process:
+                    # click.echo("find client diagnosis process at {}.".format(process.pid))
+                    if platform.system() == 'Windows':
+                        os.system("taskkill /PID {} /T /F".format(process.pid))
+                    else:
+                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the client diagnosis process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the client diagnosis process due to {e}.")
+        pass
 
 
 def cleanup_all_fedml_client_login_processes(login_program, clean_process_group=True):
     # Cleanup all fedml client login processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find(login_program) != -1:
-                    if os.path.basename(cmd) == login_program:
-                        # click.echo("find client login process at {}.".format(process.pid))
-                        if platform.system() == "Windows":
-                            os.system("taskkill /PID {} /T /F".format(process.pid))
-                        else:
-                            os.kill(process.pid, signal.SIGKILL)
-                            if clean_process_group:
-                                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-        except Exception as e:
-            pass
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find(login_program) != -1:
+                        if os.path.basename(cmd) == login_program:
+                            # click.echo("find client login process at {}.".format(process.pid))
+                            if platform.system() == "Windows":
+                                os.system("taskkill /PID {} /T /F".format(process.pid))
+                            else:
+                                os.kill(process.pid, signal.SIGKILL)
+                                if clean_process_group:
+                                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the client login process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the client login process since psutil.process_iter() failed.")
+        pass
 
 
 def cleanup_all_fedml_server_learning_processes():
     # Cleanup all fedml server learning processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            found_learning_process = False
-            found_server_process = False
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find("fedml_config.yaml") != -1:
-                    found_learning_process = True
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                found_learning_process = False
+                found_server_process = False
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find("fedml_config.yaml") != -1:
+                        found_learning_process = True
 
-                if str(cmd).find("server") != -1:
-                    found_server_process = True
+                    if str(cmd).find("server") != -1:
+                        found_server_process = True
 
-            if found_learning_process and found_server_process:
-                # click.echo("find server learning process at {}.".format(process.pid))
-                if platform.system() == 'Windows':
-                    os.system("taskkill /PID {} /T /F".format(process.pid))
-                else:
-                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-        except Exception as e:
-            pass
+                if found_learning_process and found_server_process:
+                    # click.echo("find server learning process at {}.".format(process.pid))
+                    if platform.system() == 'Windows':
+                        os.system("taskkill /PID {} /T /F".format(process.pid))
+                    else:
+                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the server learning process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the server learning process due to {e}.")
+        pass
 
 
 def cleanup_all_fedml_client_api_processes(kill_all=False, is_model_device=False):
     # Cleanup all fedml client api processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            find_api_process = False
-            for cmd in pinfo["cmdline"]:
-                if is_model_device:
-                    if str(cmd).find("model_scheduler.device_client_api:api") != -1:
-                        find_api_process = True
-                else:
-                    if str(cmd).find("slave.client_api:api") != -1:
-                        find_api_process = True
-
-            if find_api_process:
-                # click.echo("find client api process at {}.".format(process.pid))
-                if platform.system() == 'Windows':
-                    os.system("taskkill /PID {} /T /F".format(process.pid))
-                else:
-                    if kill_all:
-                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                find_api_process = False
+                for cmd in pinfo["cmdline"]:
+                    if is_model_device:
+                        if str(cmd).find("model_scheduler.device_client_api:api") != -1:
+                            find_api_process = True
                     else:
-                        os.kill(process.pid, signal.SIGKILL)
-        except Exception as e:
-            pass
+                        if str(cmd).find("slave.client_api:api") != -1:
+                            find_api_process = True
+
+                if find_api_process:
+                    # click.echo("find client api process at {}.".format(process.pid))
+                    if platform.system() == 'Windows':
+                        os.system("taskkill /PID {} /T /F".format(process.pid))
+                    else:
+                        if kill_all:
+                            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                        else:
+                            os.kill(process.pid, signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the client api process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the client api process due to {e}.")
+        pass
 
 
 def cleanup_all_fedml_server_api_processes(kill_all=False, is_model_device=False):
     # Cleanup all fedml server api processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            find_api_process = False
-            for cmd in pinfo["cmdline"]:
-                if is_model_device:
-                    if str(cmd).find("model_scheduler.device_server_api:api") != -1:
-                        find_api_process = True
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                find_api_process = False
+                for cmd in pinfo["cmdline"]:
+                    if is_model_device:
+                        if str(cmd).find("model_scheduler.device_server_api:api") != -1:
+                            find_api_process = True
 
-                    if str(cmd).find("model_scheduler.device_model_inference:api") != -1:
-                        find_api_process = True
-                else:
-                    if str(cmd).find("master.server_api:api") != -1:
-                        find_api_process = True
-
-            if find_api_process:
-                # click.echo("find server api process at {}.".format(process.pid))
-                if platform.system() == 'Windows':
-                    os.system("taskkill /PID {} /T /F".format(process.pid))
-                else:
-                    if kill_all:
-                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                        if str(cmd).find("model_scheduler.device_model_inference:api") != -1:
+                            find_api_process = True
                     else:
-                        os.kill(process.pid, signal.SIGKILL)
-        except Exception as e:
-            pass
+                        if str(cmd).find("master.server_api:api") != -1:
+                            find_api_process = True
 
+                if find_api_process:
+                    # click.echo("find server api process at {}.".format(process.pid))
+                    if platform.system() == 'Windows':
+                        os.system("taskkill /PID {} /T /F".format(process.pid))
+                    else:
+                        if kill_all:
+                            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                        else:
+                            os.kill(process.pid, signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the server api process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the server api process due to {e}.")
+        pass
 
 def cleanup_all_fedml_server_login_processes(login_program, clean_process_group=False):
     # Cleanup all fedml client login processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find(login_program) != -1:
-                    if os.path.basename(cmd) == login_program:
-                        # click.echo("find server login process at {}.".format(process.pid))
-                        if platform.system() == 'Windows':
-                            os.system("taskkill /PID {} /T /F".format(process.pid))
-                        else:
-                            os.kill(process.pid, signal.SIGKILL)
-                            if clean_process_group:
-                                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-        except Exception as e:
-            pass
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find(login_program) != -1:
+                        if os.path.basename(cmd) == login_program:
+                            # click.echo("find server login process at {}.".format(process.pid))
+                            if platform.system() == 'Windows':
+                                os.system("taskkill /PID {} /T /F".format(process.pid))
+                            else:
+                                os.kill(process.pid, signal.SIGKILL)
+                                if clean_process_group:
+                                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the server login process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the server login process due to {e}.")
+        pass
 
 
 def cleanup_all_bootstrap_processes(bootstrap_program, clean_process_group=False):
     # Cleanup all fedml bootstrap processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find(bootstrap_program) != -1:
-                    if os.path.basename(cmd) == bootstrap_program:
-                        # click.echo("find server login process at {}.".format(process.pid))
-                        if platform.system() == 'Windows':
-                            os.system("taskkill /PID {} /T /F".format(process.pid))
-                        else:
-                            os.kill(process.pid, signal.SIGKILL)
-                            if clean_process_group:
-                                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-        except Exception as e:
-            pass
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find(bootstrap_program) != -1:
+                        if os.path.basename(cmd) == bootstrap_program:
+                            # click.echo("find server login process at {}.".format(process.pid))
+                            if platform.system() == 'Windows':
+                                os.system("taskkill /PID {} /T /F".format(process.pid))
+                            else:
+                                os.kill(process.pid, signal.SIGKILL)
+                                if clean_process_group:
+                                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except Exception as e:
+                print(f"Failed to cleanup the bootstrap process due to {e}.")
+                pass
+    except Exception as e:
+        print(f"Failed to cleanup the bootstrap process due to {e}.")
+        pass
 
 
 def cleanup_model_monitor_processes(run_id, end_point_name, model_id, model_name, model_version):
     # Cleanup all fedml server api processes.
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            find_monitor_process = False
-            find_monitor_name_arg = False
-            find_endpoint_id_name_arg = False
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).endswith("device_model_monitor.py"):
-                    find_monitor_name_arg = True
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                find_monitor_process = False
+                find_monitor_name_arg = False
+                find_endpoint_id_name_arg = False
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).endswith("device_model_monitor.py"):
+                        find_monitor_name_arg = True
 
-                if find_monitor_name_arg and str(cmd) == f"-ep":
-                    find_endpoint_id_name_arg = True
+                    if find_monitor_name_arg and str(cmd) == f"-ep":
+                        find_endpoint_id_name_arg = True
 
-                if find_monitor_name_arg and find_endpoint_id_name_arg and str(cmd) == f"{run_id}":
-                    find_monitor_process = True
+                    if find_monitor_name_arg and find_endpoint_id_name_arg and str(cmd) == f"{run_id}":
+                        find_monitor_process = True
+                        break
+
+                if find_monitor_process:
+                    # click.echo("find the monitor process at {}.".format(process.pid))
+                    if platform.system() == 'Windows':
+                        os.system("taskkill /PID {} /T /F".format(process.pid))
+                    else:
+                        os.kill(process.pid, signal.SIGKILL)
                     break
-
-            if find_monitor_process:
-                # click.echo("find the monitor process at {}.".format(process.pid))
-                if platform.system() == 'Windows':
-                    os.system("taskkill /PID {} /T /F".format(process.pid))
-                else:
-                    os.kill(process.pid, signal.SIGKILL)
-                break
-        except Exception as e:
-            pass
+            except Exception as e:
+                logging.error(f"Failed to cleanup the model monitor process due to {e}.")
+                pass
+    except Exception as e:
+        logging.error(f"For loop failed to stop the model inference monitor due to {e}.")
+        pass
 
 
 def get_process_running_count(process_name):
     count = 0
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find(process_name) != -1:
-                    if os.path.basename(cmd) == process_name:
-                        count += 1
-        except Exception as e:
-            pass
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find(process_name) != -1:
+                        if os.path.basename(cmd) == process_name:
+                            count += 1
+            except Exception as e:
+                print(f"Error in get_process_running_count: {e}")
+                pass
+    except Exception as e:
+        print(f"Error in get_process_running_count: {e}")
+        pass
 
     return count
 
 
 def edge_simulator_has_login(login_program="client_login.py"):
-    for process in psutil.process_iter():
-        try:
-            pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
-            found_login_process = False
-            found_simulator_process = False
-            for cmd in pinfo["cmdline"]:
-                if str(cmd).find(login_program) != -1:
-                    if os.path.basename(cmd) == login_program:
-                        found_login_process = True
+    try:
+        for process in psutil.process_iter():
+            try:
+                pinfo = process.as_dict(attrs=["pid", "name", "cmdline"])
+                found_login_process = False
+                found_simulator_process = False
+                for cmd in pinfo["cmdline"]:
+                    if str(cmd).find(login_program) != -1:
+                        if os.path.basename(cmd) == login_program:
+                            found_login_process = True
 
-                if str(cmd).find("edge_simulator") != -1:
-                    found_simulator_process = True
+                    if str(cmd).find("edge_simulator") != -1:
+                        found_simulator_process = True
 
-            if found_login_process and found_simulator_process:
-                return True
-        except Exception as e:
-            pass
+                if found_login_process and found_simulator_process:
+                    return True
+            except Exception as e:
+                print(f"Error in edge_simulator_has_login: {e}")
+                pass
+    except Exception as e:
+        print(f"Error in edge_simulator_has_login: {e}")
+        pass
 
     return False
 

@@ -137,8 +137,20 @@ class MLOpsConfigs(object):
         request_configs = request_configs.union(configs)
         json_params = {"config_name": [config.value for config in request_configs],
                        "device_send_time": int(time.time() * 1000)}
-        response = MLOpsConfigs._request(request_url=url, request_json=json_params, cert_path=cert_path)
-        status_code = response.json().get("code")
+        try:
+            response = MLOpsConfigs._request(request_url=url, request_json=json_params, cert_path=cert_path)
+        except Exception as e:
+            print(f"Fetch configs failed due to {e} "
+                  f"please check the network connection and try again.")
+            return {}
+
+        msg_str = ""
+        if response:
+            status_code = response.json().get("code")
+            msg_str = response.json()
+        else:
+            status_code = "FAILED"
+
         result = {}
         if status_code == "SUCCESS":
             data = response.json().get("data")
@@ -147,7 +159,8 @@ class MLOpsConfigs(object):
             mlops_config = data.get(Configs.ML_OPS_CONFIG.value)
             MLOpsUtils.calc_ntp_from_config(mlops_config)
         else:
-            raise Exception("failed to fetch device configurations!")
+            raise Exception(f"failed to fetch device configs from server, with status code: {status_code} "
+                            f"and response: {msg_str}")
         return result
 
     @staticmethod
