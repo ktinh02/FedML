@@ -93,7 +93,7 @@ class JobRunnerUtils(Singleton):
                                  f" for run {run_id}: {available_gpu_ids}")
 
                     # If the available GPU list is not in the cache, set it to the current system available GPU list
-                    if available_gpu_ids is None:
+                    if available_gpu_ids is None or available_gpu_ids == []:
                         # Get realtime GPU availability list from the system
                         available_gpu_ids = JobRunnerUtils.get_realtime_gpu_available_ids().copy()
                         logging.info(f"Cache not set yet, fetching realtime available GPU Ids: {available_gpu_ids}")
