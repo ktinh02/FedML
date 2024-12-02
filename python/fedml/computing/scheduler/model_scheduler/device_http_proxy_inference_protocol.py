@@ -53,7 +53,8 @@ class FedMLHttpProxyInference:
             # TODO(Raphael): Add support for GET and other methods
     ):
         inference_response = {}
-        http_proxy_url = f"http://{urlparse(inference_url).hostname}:{ClientConstants.LOCAL_CLIENT_API_PORT}/api/v1/predict"
+        worker_proxy_port = ClientConstants.get_inference_worker_proxy_port()
+        http_proxy_url = f"http://{urlparse(inference_url).hostname}:{worker_proxy_port}/api/v1/predict"
         if inference_type == "default":
             model_api_headers = {'Content-Type': 'application/json', 'Connection': 'close',
                                  'Accept': 'application/json'}
