@@ -351,6 +351,7 @@ class JobRunnerUtils(Singleton):
         gpu_list = sys_utils.get_gpu_list()
         gpu_count = len(gpu_list)
         realtime_available_gpu_ids = sys_utils.get_available_gpu_id_list(limit=gpu_count)
+        logging.info(f"get_available_gpu_id_list limit:{gpu_count}, available_gpu_ids:{realtime_available_gpu_ids}")
         return realtime_available_gpu_ids
 
     @staticmethod
