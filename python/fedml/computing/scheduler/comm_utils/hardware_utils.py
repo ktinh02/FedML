@@ -56,14 +56,17 @@ class HardwareUtil(metaclass=Singleton):
     @staticmethod
     def get_gpus() -> List[GPUCard]:
         gpu_util = HardwareUtil.__get_util()
-        return gpu_util.get_gpu_cards() if gpu_util is not None else []
+        cards = gpu_util.get_gpu_cards() if gpu_util is not None else []
+        logging.info(f"hardware_utils Available GPU cards len ---> { len(cards)}")
+        logging.info(f"hardware_utils Available GPU cards ---> {cards}")
+        return cards
 
     @staticmethod
     def get_available_gpu_ids(order: str = "memory", limit: int = 1, max_load: float = 0.01,
                               max_memory: float = 0.01) -> List[int]:
         gpu_util = HardwareUtil.__get_util()
         card_ids = gpu_util.get_available_gpu_card_ids(order, limit, max_load, max_memory) if gpu_util is not None else []
-        logging.info(f"Available GPU card ids ---> {card_ids}")
+        logging.info(f"hardware_utils get_available_gpu_ids ids ---> {card_ids}")
         return card_ids
 
     @staticmethod
