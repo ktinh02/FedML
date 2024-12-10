@@ -379,6 +379,8 @@ class FedMLBaseSlaveProtocolManager(FedMLSchedulerBaseProtocolManager, ABC):
                                 "edge_info": device_info_json}
             if context is not None:
                 response_payload["context"] = context
+            
+            logging.info(f"Response payload --> {response_payload}")
             self.message_center.send_message(response_topic, json.dumps(response_payload), run_id=run_id)
 
     def callback_request_device_info_from_mlops(self, topic, payload):
