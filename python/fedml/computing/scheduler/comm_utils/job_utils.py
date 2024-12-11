@@ -353,6 +353,9 @@ class JobRunnerUtils(Singleton):
                 current_available_gpu_ids = JobRunnerUtils.get_realtime_gpu_available_ids().copy()
                 ComputeCacheManager.get_instance().get_gpu_cache().set_device_available_gpu_ids(device_id,
                                                                                                 current_available_gpu_ids)
+                # Set the initial available GPU ids to the cache, use to check if the device all available GPU ids is changed because of the system resource change
+                ComputeCacheManager.get_instance().get_gpu_cache().set_device_initial_available_gpu_ids(device_id, current_available_gpu_ids)
+                
                 gpu_list = sys_utils.get_gpu_list()
                 ComputeCacheManager.get_instance().get_gpu_cache().set_device_total_num_gpus(device_id, len(gpu_list))
         except Exception as e:
