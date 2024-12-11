@@ -86,8 +86,7 @@ class JobRunnerUtils(Singleton):
                     # Get the available GPU list, FEDML_GLOBAL_DEVICE_AVAILABLE_GPU_IDS_TAG-${device_id}
                     available_gpu_ids = ComputeCacheManager.get_instance().get_gpu_cache().get_device_available_gpu_ids(
                         device_id)
-                    logging.info(
-                        f"Available GPU Ids fetched from cache: {available_gpu_ids}")
+                    logging.info(f"Available GPU Ids fetched from cache: {available_gpu_ids}")
 
                     logging.info(f"Check worker({device_id})'s realtime gpu availability in DB"
                                  f" for run {run_id}: {available_gpu_ids}")
@@ -99,8 +98,20 @@ class JobRunnerUtils(Singleton):
                         logging.info(f"Cache not set yet, fetching realtime available GPU Ids: {available_gpu_ids}")
                     else:
                         available_gpu_ids = JobRunnerUtils.trim_unavailable_gpu_ids(available_gpu_ids)
-                        logging.info(
-                            f"Trimmed available GPU Ids: {available_gpu_ids}")
+                        logging.info(f"Trimmed available GPU Ids: {available_gpu_ids}")
+                        
+                        # check if the initial available GPU ids is changed
+                        initial_available_gpu_ids = ComputeCacheManager.get_instance().get_gpu_cache().get_device_initial_available_gpu_ids(device_id)
+                        # logging.info(f"Initial available GPU Ids: {initial_available_gpu_ids}")
+                        if initial_available_gpu_ids and (not all(gpu_id in available_gpu_ids for gpu_id in initial_available_gpu_ids)):
+                            # then add the initial_available_gpu_ids to the available_gpu_ids
+                            available_gpu_ids.extend(initial_available_gpu_ids)
+                            available_gpu_ids = list(set(available_gpu_ids))
+                            # sort the available_gpu_ids
+                            available_gpu_ids.sort()
+                            logging.info(f"Device {device_id} available GPU ids is changed because of the system gpu resource change, "
+                                         f"initial available GPU ids: {initial_available_gpu_ids}, "
+                                         f"current available GPU ids: {available_gpu_ids}")
 
                     # Get the matched gpu ids string by the request gpu num
                     cuda_visible_gpu_ids_str, matched_gpu_num = JobRunnerUtils.request_gpu_ids(request_gpu_num,
@@ -317,10 +328,12 @@ class JobRunnerUtils(Singleton):
                     device_id)
 
                 # If the available GPU list is not in the cache, set it to the current system available GPU list
-                if available_gpu_ids is None:
+                if available_gpu_ids is None or available_gpu_ids == []:
                     # Get realtime GPU availability list from the system
                     gpu_ids = JobRunnerUtils.get_realtime_gpu_available_ids().copy()
                     ComputeCacheManager.get_instance().get_gpu_cache().set_device_available_gpu_ids(device_id, gpu_ids)
+                    # Set the initial available GPU ids to the cache, use to check if the device all available GPU ids is changed because of the system resource change
+                    ComputeCacheManager.get_instance().get_gpu_cache().set_device_initial_available_gpu_ids(device_id, gpu_ids)
                     available_gpu_ids = gpu_ids
             return available_gpu_ids
 
