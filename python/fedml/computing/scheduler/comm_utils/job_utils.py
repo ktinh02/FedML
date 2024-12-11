@@ -102,7 +102,7 @@ class JobRunnerUtils(Singleton):
                         
                         # check if the initial available GPU ids is changed
                         initial_available_gpu_ids = ComputeCacheManager.get_instance().get_gpu_cache().get_device_initial_available_gpu_ids(device_id)
-                        # logging.info(f"Initial available GPU Ids: {initial_available_gpu_ids}")
+                        logging.info(f"Initial available GPU Ids: {initial_available_gpu_ids}")
                         if initial_available_gpu_ids and (not all(gpu_id in available_gpu_ids for gpu_id in initial_available_gpu_ids)):
                             # then add the initial_available_gpu_ids to the available_gpu_ids
                             available_gpu_ids.extend(initial_available_gpu_ids)
@@ -334,6 +334,7 @@ class JobRunnerUtils(Singleton):
                     ComputeCacheManager.get_instance().get_gpu_cache().set_device_available_gpu_ids(device_id, gpu_ids)
                     # Set the initial available GPU ids to the cache, use to check if the device all available GPU ids is changed because of the system resource change
                     ComputeCacheManager.get_instance().get_gpu_cache().set_device_initial_available_gpu_ids(device_id, gpu_ids)
+                    logging.info(f"Set device {device_id} initial available GPU ids: {gpu_ids}")
                     available_gpu_ids = gpu_ids
             return available_gpu_ids
 
