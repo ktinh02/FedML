@@ -398,6 +398,10 @@ def parse_resource_related_config(config, gpu_num_frm_platform=0):
         num_gpus = 0
 
     shm_size = config.get('shm_size', None)
+    # set shm_size to 8G if not specified
+    if not shm_size:
+        shm_size = "8G"
+
     storage_opt = config.get('storage_opt', None)
     tmpfs = config.get('tmpfs', None)
     cpus = config.get('cpus', None)
