@@ -191,7 +191,6 @@ def get_available_gpu_id_list(limit=1) -> List[int]:
 
     gpu_available_list = HardwareUtil.get_available_gpu_ids(order='memory', limit=limit, max_load=0.01,
                                                             max_memory=0.01)
-    logging.info(f"GPU available ids from HardwareUtil.get_available_gpu_ids, limit --> {limit}")
     return gpu_available_list
 
 
