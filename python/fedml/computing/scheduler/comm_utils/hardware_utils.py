@@ -57,7 +57,7 @@ class HardwareUtil(metaclass=Singleton):
     def get_gpus() -> List[GPUCard]:
         gpu_util = HardwareUtil.__get_util()
         cards = gpu_util.get_gpu_cards() if gpu_util is not None else []
-        logging.info(f"hardware_utils Available GPU cards len ---> { len(cards)}")
+        # logging.info(f"hardware_utils Available GPU cards len ---> { len(cards)}")
         return cards
 
     @staticmethod
@@ -65,7 +65,7 @@ class HardwareUtil(metaclass=Singleton):
                               max_memory: float = 0.01) -> List[int]:
         gpu_util = HardwareUtil.__get_util()
         card_ids = gpu_util.get_available_gpu_card_ids(order, limit, max_load, max_memory) if gpu_util is not None else []
-        logging.info(f"hardware_utils get_available_gpu_ids ids ---> {card_ids}, limit ---> {limit}")
+        # logging.info(f"hardware_utils get_available_gpu_ids ids ---> {card_ids}, limit ---> {limit}")
         return card_ids
 
     @staticmethod
