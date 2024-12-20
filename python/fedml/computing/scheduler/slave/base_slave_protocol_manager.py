@@ -321,7 +321,7 @@ class FedMLBaseSlaveProtocolManager(FedMLSchedulerBaseProtocolManager, ABC):
         run_id = payload_json.get("run_id", 0)
         listen_edge_id = str(topic).split("/")[-1]
         context = payload_json.get("context", None)
-        need_gpu_info = payload_json.get("need_gpu_info", False)
+        need_gpu_info = payload_json.get("need_gpu_info", True)
         need_running_process_list = payload_json.get("need_running_process_list", False)
         model_master_device_id = payload_json.get("model_master_device_id", None)
         model_slave_device_id_list = payload_json.get("model_slave_device_id_list", None)
