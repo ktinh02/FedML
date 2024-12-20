@@ -233,7 +233,7 @@ class MLOpsDevicePerfStats(object):
         # Do not use the following two lines as the realtime available gpu ids.
         # gpu_available_ids = JobRunnerUtils.get_available_gpu_id_list(edge_id)
         # gpu_available_ids = JobRunnerUtils.trim_unavailable_gpu_ids(gpu_available_ids)
-        gpu_cores_available = len(gpu_available_ids)
+        gpu_cores_available = len(gpu_available_ids) if gpu_available_ids is not None else 0
         deploy_worker_id_list = list()
         try:
             deploy_worker_id_list = json.loads(os.environ.get("FEDML_DEPLOY_WORKER_IDS", "[]"))
