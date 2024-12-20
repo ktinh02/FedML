@@ -78,7 +78,7 @@ def _bind(
     else:
         docker_install_url = "https://docs.docker.com/engine/install/"
         docker_config_text = " Moreover, you need to config the docker engine to run as a non-root user. Here is the docs. https://docs.docker.com/engine/install/linux-postinstall/"
-    print("\n Welcome toTensorOpera.ai! \n Start to login the current device to the TensorOpera® Nexus AI Platform\n")
+    print("\n Welcome to FedML.ai! \n Start to login the current device to the TensorOpera® Nexus AI Platform\n")
     print(" If you want to deploy models into this computer, you need to install the docker engine to serve your models.")
     print(f" Here is the docs for installation docker engine. {docker_install_url}")
     if docker_config_text is not None:
