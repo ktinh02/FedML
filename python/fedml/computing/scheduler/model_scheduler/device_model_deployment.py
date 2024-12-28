@@ -65,6 +65,10 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
         request_json = dict()
     logging.info("[Worker] Model deployment is starting...")
 
+    logging.info("=" * 80)
+    logging.info("[Device Model Deployment] Received start deployment request: {}".format(request_json))
+    logging.info("=" * 80)
+
     # Real gpu per replica (container-level)
     num_gpus = gpu_per_replica
     gpu_ids, gpu_attach_cmd = None, ""
@@ -213,6 +217,25 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
             detach=True,
             command=customized_image_entry_cmd,
         )
+
+        logging.info("=" * 80)
+        logging.info("[Device Model Deployment] Creating container with following parameters:")
+        logging.info("=" * 80)
+        logging.info("Image: {}".format(inference_image_name))
+        logging.info("Container name: {}".format(default_server_container_name))
+        logging.info("Volumes:")
+        for vol in volumes:
+            logging.info("  - {}".format(vol))
+        logging.info("Ports: [{}]".format(port_inside_container))
+        logging.info("Environment variables:")
+        for key, value in environment.items():
+            logging.info("  {} = {}".format(key, value))
+        logging.info("Host config:")
+        for key, value in host_config_dict.items():
+            logging.info("  {} = {}".format(key, value))
+        logging.info("Command: {}".format(customized_image_entry_cmd))
+        logging.info("=" * 80)
+
         client.api.start(container=new_container.get("Id"))
     except Exception as e:
         logging.error(f"Failed to create the container with exception {e}, traceback : {traceback.format_exc()}")
