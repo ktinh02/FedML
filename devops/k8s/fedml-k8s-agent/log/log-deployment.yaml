@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-demo
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-demo
+  template:
+    metadata:
+      labels:
+        app: log-demo
+    spec:
+      nodeName: edge-dgx-134
+      containers:
+      - name: app-container
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+          - while true; do
+              echo "[$(date)] Application log message";
+              sleep 1;
+            done
+
+      - name: log-collector
+        image: fedml/crictl-ubuntu:v1
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            echo "Starting log collector..."
+            interval=20  # 间隔20秒
+            
+            # 获取容器ID（只获取一次）
+            while true; do
+              CONTAINER_ID=$(crictl ps --name app-container --quiet)
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "[$(date)] Found container ID: $CONTAINER_ID"
+                break
+              fi
+              echo "[$(date)] Waiting for app-container to be ready..."
+              sleep 2
+            done
+            
+            # 首次获取所有日志
+            echo "----------------------------------------"
+            echo "[$(date)] Initial logs:"
+            crictl logs --timestamps $CONTAINER_ID
+            
+            # 记录当前时间作为下次收集的起点
+            last_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            echo "[$(date)] Next collection will start from: $last_time"
+            
+            # 循环收集新日志
+            while true; do
+              echo "----------------------------------------"
+              sleep $interval
+              
+              current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+              echo "[$(date)] Collecting logs since: $last_time"
+              
+              # 使用上次记录的时间获取日志
+              crictl logs --timestamps --since="$last_time" $CONTAINER_ID
+              
+              # 更新上次检查时间
+              last_time=$current_time
+              echo "[$(date)] Next collection will start from: $last_time"
+            done
+        volumeMounts:
+        - name: containerd-sock
+          mountPath: /run/containerd/containerd.sock
+        - name: pod-logs
+          mountPath: /var/log/pods
+        - name: container-logs
+          mountPath: /var/log/containers
+      volumes:
+      - name: containerd-sock
+        hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket
+      - name: pod-logs
+        hostPath:
+          path: /var/log/pods
+          type: Directory
+      - name: container-logs
+        hostPath:
+          path: /var/log/containers
+          type: Directory

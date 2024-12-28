@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fedml-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fedml-agent
+  template:
+    metadata:
+      labels:
+        app: fedml-agent
+    spec:
+      containers:
+      - name: fedml-agent
+        image: fedml/fedml-k8s-agent:202412271540
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: FEDML_API_KEY
+          value: "de6aa755c9114534a9805dce8c702355"
+        - name: FEDML_ENV
+          value: "test"
+        - name: FEDML_PROVIDER
+          value: "false"
+        - name: FEDML_DEVICE_ID
+          value: "edge-dgx-134-000001"
+        resources:
+          requests:
+            nvidia.com/gpu: 1
+            cpu: "16"
+            memory: "64Gi"
+          limits:
+            nvidia.com/gpu: 1
+            cpu: "16"
+            memory: "64Gi"
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+      nodeName: edge-dgx-134
+      # Required for NVIDIA GPU support
+      # nodeSelector:
+      #   nvidia.com/gpu: "true"
