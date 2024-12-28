@@ -17,6 +17,9 @@ spec:
       containers:
       - name: app-container
         image: busybox
+        # resources:
+        #   limits:
+        #     nvidia.com/gpu: 1
         command: ["/bin/sh", "-c"]
         args:
           - while true; do
@@ -25,18 +28,37 @@ spec:
             done
 
       - name: log-collector
-        image: fedml/crictl-ubuntu:v1
+        image: fedml/crictl-ubuntu:v2
         command: ["/bin/bash", "-c"]
         args:
           - |
             echo "Starting log collector..."
-            interval=20  # 间隔20秒
+            
+            # 配置 crictl
+            cat > /etc/crictl.yaml <<EOF
+            runtime-endpoint: unix:///run/containerd/containerd.sock
+            image-endpoint: unix:///run/containerd/containerd.sock
+            timeout: 10
+            debug: false
+            EOF
+            
+            interval=20
             
             # 获取容器ID（只获取一次）
             while true; do
               CONTAINER_ID=$(crictl ps --name app-container --quiet)
               if [ -n "$CONTAINER_ID" ]; then
                 echo "[$(date)] Found container ID: $CONTAINER_ID"
+                # 获取GPU信息
+                echo "[$(date)] GPU Information:"
+                GPU_INFO=$(crictl inspect $CONTAINER_ID | jq -r '.info.config.envs[] | select(.key=="NVIDIA_VISIBLE_DEVICES") | .value')
+                if [ -n "$GPU_INFO" ]; then
+                  echo "Available GPUs: $GPU_INFO"
+                  GPU_COUNT=$(echo "$GPU_INFO" | tr ',' '\n' | wc -l)
+                  echo "Total GPU Count: $GPU_COUNT"
+                else
+                  echo "No GPU information found"
+                fi
                 break
               fi
               echo "[$(date)] Waiting for app-container to be ready..."

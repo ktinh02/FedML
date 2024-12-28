@@ -12,9 +12,13 @@ spec:
       labels:
         app: fedml-agent
     spec:
+      nodeName: edge-dgx-134
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
       containers:
       - name: fedml-agent
-        image: fedml/fedml-k8s-agent:202412271540
+        image: fedml/fedml-k8s-agent:202412282240
         imagePullPolicy: IfNotPresent
         env:
         - name: FEDML_API_KEY
@@ -27,17 +31,83 @@ spec:
           value: "edge-dgx-134-000001"
         resources:
           requests:
-            nvidia.com/gpu: 1
-            cpu: "16"
-            memory: "64Gi"
+            # nvidia.com/gpu: 1
+            cpu: "4"
+            memory: "16Gi"
           limits:
-            nvidia.com/gpu: 1
-            cpu: "16"
-            memory: "64Gi"
-      dnsConfig:
-        nameservers:
-          - 8.8.8.8
-      nodeName: edge-dgx-134
+            # nvidia.com/gpu: 1
+            cpu: "4"
+            memory: "16Gi"
+        volumeMounts:
+          - name: shared-model-dir
+            mountPath: /root/.fedml/fedml-model-client/fedml/model_packages/current_model
+            
+      # - name: container-task
+      #   # image: fedml/fedml-inference-cuda-12-1-base:v20241129
+      #   image: nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
+      #   ports:
+      #   - containerPort: 2345
+      #   command: ["/bin/bash", "-c"]
+      #   args:
+      #     - |
+      #       apt-get update && \
+      #       apt-get install -y python3 python3-pip && \
+      #       pip3 install flask && \
+      #       echo 'from flask import Flask
+      #       app = Flask(__name__)
+      #       @app.route("/")
+      #       def hello():
+      #           return "Hello, World!"
+      #       if __name__ == "__main__":
+      #           app.run(host="0.0.0.0", port=2345)' > /app.py && \
+      #       python3 /app.py
+      #   env:
+      #   - name: FEDML_USER_ENCRYPTED_API_KEY
+      #     value: "818e7a4104d5d72c57c9be4b5af4f112f7d6f55c8ecba16f83d3a9f1a1a14f4d05741c93a72c59e2a8420811b140b983"
+      #   - name: MAIN_ENTRY
+      #     value: "main_openai_vllm.py"
+      #   - name: HOME
+      #     value: "/home/fedml"
+      #   - name: BOOTSTRAP_DIR
+      #     value: "/home/fedml/models_serving/fedml-deploy-bootstrap-entry-auto-gen.sh"
+      #   - name: FEDML_CURRENT_EDGE_ID
+      #     value: "7212"
+      #   - name: FEDML_CURRENT_RUN_ID
+      #     value: "3833"
+      #   - name: FEDML_REPLICA_RANK
+      #     value: "0"
+      #   - name: FEDML_CURRENT_VERSION
+      #     value: "test"
+      #   - name: FEDML_ENV_VERSION
+      #     value: "test"
+      #   - name: FEDML_ENV_LOCAL_ON_PREMISE_PLATFORM_HOST
+      #     value: "127.0.0.1"
+      #   - name: FEDML_ENV_LOCAL_ON_PREMISE_PLATFORM_PORT
+      #     value: "80"
+      #   - name: HF_HOME
+      #     value: "/home/fedml/fedml_serving/model_and_config"
+      #   - name: HF_TOKEN
+      #     value: "config/huggingface/DEFAULT_HF_TOKEN"
+      #   - name: INFERENCE_CONFIG
+      #     value: "config/inference/meta-llama--Meta-Llama-3-8B-Instruct.yaml"
+      #   volumeMounts:
+      #     - name: shared-model-dir
+      #       mountPath: /home/fedml/models_serving
+      #   resources:
+      #     limits:
+      #       nvidia.com/gpu: "1"
+      #       cpu: "8"
+      #       memory: "32Gi"
+      #     requests:
+      #       nvidia.com/gpu: "1"
+      #       cpu: "8"
+      #       memory: "32Gi"
+
+      volumes:
+      - name: shared-model-dir
+        emptyDir: {}
+      
+      
       # Required for NVIDIA GPU support
       # nodeSelector:
       #   nvidia.com/gpu: "true"
