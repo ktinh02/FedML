@@ -7,6 +7,7 @@ import traceback
 import yaml
 import datetime
 import docker
+import shutil
 
 import requests
 import torch
@@ -73,6 +74,9 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
     running_model_name = ClientConstants.get_running_model_name(
         end_point_name, inference_model_name, model_version, end_point_id, model_id, edge_id=edge_id)
 
+    # Create a symbolic link to the model storage directory
+    create_model_symlink(model_storage_local_path)
+    
     # Parse the model config file
     model_config_path = os.path.join(model_storage_local_path, "fedml_model_config.yaml")
     with open(model_config_path, 'r') as file:
@@ -261,6 +265,33 @@ def start_deployment(end_point_id, end_point_name, model_id, model_version,
 
     return running_model_name, inference_output_url, model_version, model_metadata, ret_model_config
 
+def create_model_symlink(model_storage_local_path):
+    """
+    Create a symbolic link to the model storage directory and list its contents.
+    Args:
+        model_storage_local_path: Full path to the model storage directory
+    Returns:
+        None
+    """
+    # Define symlink path
+    symlink_dir = os.path.join(ClientConstants.get_model_package_dir(), "current_model")
+    # Remove existing symlink if it exists
+    if os.path.exists(symlink_dir):
+        if os.path.islink(symlink_dir):
+            os.unlink(symlink_dir)
+        else:
+            shutil.rmtree(symlink_dir)
+            
+    # Create parent directories if they don't exist
+    os.makedirs(os.path.dirname(symlink_dir), exist_ok=True)
+    
+    # Create symlink
+    os.symlink(model_storage_local_path, symlink_dir)
+    
+    # Print files in the directory
+    logging.info(f"[create_model_symlink]Files in {symlink_dir}:")
+    for f in os.listdir(symlink_dir):
+        logging.info(f"  {f}")
 
 def should_exit_logs(end_point_id, model_id, cmd_type, model_name, inference_engine, inference_port,
                      inference_type="default", request_input_example=None, infer_host="127.0.0.1",
