@@ -7,6 +7,8 @@ from transformers import (
     BertTokenizer,
     DistilBertConfig,
     DistilBertTokenizer,
+    RobertaConfig,
+    RobertaTokenizer
 )
 from fedml.model.nlp.model_args import *
 from fedml.data.fednlp.base.data_manager.base_data_manager import BaseDataManager
@@ -114,6 +116,8 @@ def load_synthetic_data(args):
         tokenizer_class = BertTokenizer
     elif args.model_type == "distilbert":
         tokenizer_class = DistilBertTokenizer
+    elif args.model_type == "roberta":
+        tokenizer_class = RobertaTokenizer
     tokenizer = tokenizer_class.from_pretrained(
         args.model, do_lower_case=args.do_lower_case
     )

@@ -15,6 +15,7 @@ from ..base_com_manager import BaseCommunicationManager
 from ..message import Message
 from ..observer import Observer
 import time
+import numpy as np
 
 
 class MqttS3MultiClientsCommManager(BaseCommunicationManager):
@@ -245,23 +246,33 @@ class MqttS3MultiClientsCommManager(BaseCommunicationManager):
     def _on_message(self, msg):
         self._on_message_impl(msg)
 
+    def make_json_serializable(self, obj):
+        """
+        Recursively converts NumPy types and other non-JSON-serializable objects
+        into standard Python types compatible with JSON serialization.
+        """
+        if isinstance(obj, dict):
+            return {key: self.make_json_serializable(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [self.make_json_serializable(element) for element in obj]
+        elif isinstance(obj, tuple):
+            return tuple(self.make_json_serializable(element) for element in obj)
+        elif isinstance(obj, (np.integer, np.int64, np.int32)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64, np.float32)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()  # Convert NumPy arrays to lists
+        elif isinstance(obj, (set, frozenset)):
+            return list(obj)  # Convert sets to lists
+        else:
+            return obj
+
     def send_message(self, msg: Message, wait_for_publish=False):
-        """
-        [server]
-        sending message topic (publish): fedml_runid_serverID_clientID
-        receiving message topic (subscribe): fedml_runid_clientID
-
-        [client]
-        sending message topic (publish): fedml_runid_clientID
-        receiving message topic (subscribe): fedml_runid_serverID_clientID
-
-        """
         receiver_id = msg.get_receiver_id()
         if self.args.rank == 0:
-            # topic = "fedml" + "_" + "run_id" + "_0" + "_" + "client_id"
             topic = self._topic + str(self.server_id) + "_" + str(receiver_id)
             logging.info("mqtt_s3.send_message: msg topic = %s" % str(topic))
-
             payload = msg.get_params()
             model_params_obj = payload.get(Message.MSG_ARG_KEY_MODEL_PARAMS, "")
             model_url = payload.get(Message.MSG_ARG_KEY_MODEL_PARAMS_URL, "")
@@ -275,24 +286,24 @@ class MqttS3MultiClientsCommManager(BaseCommunicationManager):
                     else:
                         model_url = self.s3_storage.write_model(model_key, model_params_obj)
 
+
                 logging.info(
                     "mqtt_s3.send_message: S3+MQTT msg sent, s3 message key = %s"
                     % model_key
                 )
                 logging.info("mqtt_s3.send_message: to python client.")
-
                 payload[Message.MSG_ARG_KEY_MODEL_PARAMS] = model_key
                 payload[Message.MSG_ARG_KEY_MODEL_PARAMS_URL] = model_url
                 payload[Message.MSG_ARG_KEY_MODEL_PARAMS_KEY] = model_key
-                self.mqtt_mgr.send_message(topic, json.dumps(payload))
-            else:
-                # pure MQTT
-                self.mqtt_mgr.send_message(topic, json.dumps(payload))
+            try:
+                serializable_payload = self.make_json_serializable(payload)
+                self.mqtt_mgr.send_message(topic, json.dumps(serializable_payload))
+            except TypeError as e:
+                logging.error(f"Serialization failed for payload: {payload}. Error: {e}")
+                raise
         else:
-            # client
             topic = self._topic + str(msg.get_sender_id())
             message_key = topic + "_" + str(uuid.uuid4())
-
             payload = msg.get_params()
             model_params_obj = payload.get(Message.MSG_ARG_KEY_MODEL_PARAMS, "")
             if model_params_obj != "":
@@ -308,19 +319,27 @@ class MqttS3MultiClientsCommManager(BaseCommunicationManager):
                     "obj": model_params_obj,
                 }
                 payload[Message.MSG_ARG_KEY_MODEL_PARAMS] = model_params_key_url["key"]
-                payload[Message.MSG_ARG_KEY_MODEL_PARAMS_URL] = model_params_key_url[
-                    "url"
-                ]
+                payload[Message.MSG_ARG_KEY_MODEL_PARAMS_URL] = model_params_key_url["url"]
                 logging.info(
                     "mqtt_s3.send_message: client s3, topic = %s"
                     % topic
                 )
-                self.mqtt_mgr.send_message(topic, json.dumps(payload))
+                try:
+                    serializable_payload = self.make_json_serializable(payload)
+                    self.mqtt_mgr.send_message(topic, json.dumps(serializable_payload))
+                except TypeError as e:
+                    logging.error(f"Serialization failed for payload: {payload}. Error: {e}")
+                    raise
             else:
                 logging.info("mqtt_s3.send_message: MQTT msg sent")
-                self.mqtt_mgr.send_message(topic, json.dumps(payload))
-
+                try:
+                    serializable_payload = self.make_json_serializable(payload)
+                    self.mqtt_mgr.send_message(topic, json.dumps(serializable_payload))
+                except TypeError as e:
+                    logging.error(f"Serialization failed for payload: {payload}. Error: {e}")
+                    raise
         return True
+
 
     def send_message_json(self, topic_name, json_message):
         return self.mqtt_mgr.send_message_json(topic_name, json_message)

@@ -1,15 +1,22 @@
 import logging
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath("/home/ktinh/Documents/GitHub/FedML/python"))
+
 
 import fedml
-from data.data_loader import load
 from fedml import FedMLRunner
+from data.data_loader import load
 from model.bert_model import BertForSequenceClassification
 from model.distilbert_model import DistilBertForSequenceClassification
+from model.roberta_model import RobertaForSequenceClassification
 from trainer.classification_aggregator import ClassificationAggregator
 from trainer.classification_trainer import MyModelTrainer as MyCLSTrainer
 from transformers import (
     BertConfig,
     DistilBertConfig,
+    RobertaConfig
 )
 
 
@@ -22,7 +29,7 @@ def create_model(args, output_dim=1):
         "classification": {
             "bert": (BertConfig, BertForSequenceClassification),
             "distilbert": (DistilBertConfig, DistilBertForSequenceClassification),
-            # "roberta": (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
+            "roberta": (RobertaConfig, RobertaForSequenceClassification),
             # "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
         },
     }
@@ -60,6 +67,9 @@ if __name__ == "__main__":
 
     # load data
     dataset, output_dim = load(args)
+
+    output_dim = 5 
+
 
     # load model and trainer
     model, trainer = create_model(args, output_dim)

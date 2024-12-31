@@ -34,7 +34,7 @@ class ClientMasterManager(FedMLCommManager):
         self.client_real_ids = json.loads(args.client_id_list)
         logging.info("self.client_real_ids = {}".format(self.client_real_ids))
         # for the client, len(self.client_real_ids)==1: we only specify its client id in the list, not including others.
-        self.client_real_id = self.client_real_ids[0]
+        self.client_real_id = self.client_real_ids[2]
 
         self.has_sent_online_msg = False
         self.is_inited = False

@@ -21,5 +21,7 @@ class TextClassificationDataManager(BaseDataManager):
         y = list()
         for idx in tqdm(index_list, desc="Loading data from h5 file." + desc):
             X.append(data_file["X"][str(idx)][()].decode("utf-8"))
-            y.append(data_file["Y"][str(idx)][()].decode("utf-8"))
+            label_value = data_file["Y"][str(idx)][()]
+            y.append(str(label_value))
         return {"X": X, "y": y}
+
